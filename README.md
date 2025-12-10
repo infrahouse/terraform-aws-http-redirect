@@ -125,6 +125,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_cloudfront_price_class"></a> [cloudfront\_price\_class](#input\_cloudfront\_price\_class) | CloudFront distribution price class. Controls which edge locations are used<br/>and affects cost:<br/>- PriceClass\_100: US, Canada, Europe (lowest cost)<br/>- PriceClass\_200: PriceClass\_100 + Asia, Africa, Oceania, Middle East<br/>- PriceClass\_All: All edge locations (highest cost, best performance globally) | `string` | `"PriceClass_100"` | no |
 | <a name="input_redirect_hostnames"></a> [redirect\_hostnames](#input\_redirect\_hostnames) | List of hostname prefixes to redirect (e.g., ['', 'www'] for apex and www<br/>subdomain). Use empty string for apex domain. | `list(string)` | <pre>[<br/>  "",<br/>  "www"<br/>]</pre> | no |
 | <a name="input_redirect_to"></a> [redirect\_to](#input\_redirect\_to) | Target URL where HTTP(S) requests will be redirected. Can be:<br/>- A hostname: 'example.com'<br/>- A hostname with path: 'example.com/landing'<br/><br/>Note: Query parameters in redirect\_to are not supported due to S3 routing<br/>rule limitations. Source query parameters will be preserved in redirects.<br/>Do not include protocol (https://). | `string` | n/a | yes |
 | <a name="input_zone_id"></a> [zone\_id](#input\_zone\_id) | Route53 hosted zone ID where DNS records will be created | `string` | n/a | yes |

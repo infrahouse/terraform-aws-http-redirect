@@ -24,6 +24,7 @@ resource "aws_cloudfront_distribution" "redirect" {
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = ""
+  price_class         = var.cloudfront_price_class
 
   origin {
     domain_name = aws_s3_bucket_website_configuration.redirect.website_endpoint

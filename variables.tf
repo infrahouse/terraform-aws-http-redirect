@@ -61,3 +61,26 @@ variable "zone_id" {
     EOT
   }
 }
+
+variable "cloudfront_price_class" {
+  description = <<-EOT
+    CloudFront distribution price class. Controls which edge locations are used
+    and affects cost:
+    - PriceClass_100: US, Canada, Europe (lowest cost)
+    - PriceClass_200: PriceClass_100 + Asia, Africa, Oceania, Middle East
+    - PriceClass_All: All edge locations (highest cost, best performance globally)
+  EOT
+  type        = string
+  default     = "PriceClass_100"
+
+  validation {
+    condition = contains([
+      "PriceClass_100",
+      "PriceClass_200",
+      "PriceClass_All"
+    ], var.cloudfront_price_class)
+    error_message = <<-EOT
+      cloudfront_price_class must be one of: PriceClass_100, PriceClass_200, or PriceClass_All.
+    EOT
+  }
+}
