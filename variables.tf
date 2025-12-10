@@ -25,19 +25,26 @@ variable "redirect_hostnames" {
 
 variable "redirect_to" {
   description = <<-EOT
-    Target hostname where HTTP(S) requests will be redirected (e.g.,
-    'example.com'). Do not include protocol (https://).
+    Target URL where HTTP(S) requests will be redirected. Can be:
+    - A hostname: 'example.com'
+    - A hostname with path: 'example.com/landing'
+
+    Note: Query parameters in redirect_to are not supported due to S3 routing
+    rule limitations. Source query parameters will be preserved in redirects.
+    Do not include protocol (https://).
   EOT
   type        = string
 
   validation {
     condition = can(regex(
-      "^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$",
+      "^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*(/[^?#]*)?$",
       var.redirect_to
     ))
     error_message = <<-EOT
-      redirect_to must be a valid hostname (not a URL). Example: 'example.com'
-      not 'https://example.com'
+      redirect_to must be a valid hostname optionally followed by a path.
+      Examples: 'example.com', 'example.com/path', 'example.com/landing/page'
+      Query parameters are not supported.
+      Do not include protocol (e.g., not 'https://example.com')
     EOT
   }
 }

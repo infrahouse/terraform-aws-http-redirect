@@ -20,6 +20,26 @@ from tests.conftest import (
 @pytest.mark.parametrize(
     "aws_provider_version", ["~> 5.56", "~> 6.0"], ids=["aws-5", "aws-6"]
 )
+@pytest.mark.parametrize(
+    "redirect_to,expected_root,expected_path,expected_deep_path",
+    [
+        # a) hostname only - preserves all paths
+        (
+            "infrahouse.com",
+            "https://infrahouse.com/",
+            "https://infrahouse.com/test/path",
+            "https://infrahouse.com/deep/nested/path/structure",
+        ),
+        # b) hostname with path - prepends path to all requests
+        (
+            "infrahouse.com/some-path",
+            "https://infrahouse.com/some-path/",
+            "https://infrahouse.com/some-path/test/path",
+            "https://infrahouse.com/some-path/deep/nested/path/structure",
+        ),
+    ],
+    ids=["hostname", "path"],
+)
 def test_module(
     subzone,
     test_role_arn,
@@ -27,6 +47,10 @@ def test_module(
     aws_region,
     boto3_session,
     aws_provider_version,
+    redirect_to,
+    expected_root,
+    expected_path,
+    expected_deep_path,
 ):
     # Get zone ID from subzone fixture
     zone_id = subzone["subzone_id"]["value"]
@@ -41,6 +65,7 @@ def test_module(
                 f"""
                     region       = "{aws_region}"
                     test_zone_id = "{zone_id}"
+                    redirect_to  = "{redirect_to}"
                     """
             )
         )
@@ -60,10 +85,73 @@ def test_module(
     ) as tf_output:
         LOG.info("%s", json.dumps(tf_output, indent=4))
         zone_name = tf_output["zone_name"]["value"]
-        response = get(f"http://{zone_name}", allow_redirects=False)
+
+        LOG.info(f"Testing redirect_to={redirect_to}")
+        LOG.info("=" * 70)
+
+        # Test 1: HTTP to HTTPS redirect (always redirects to HTTPS version of source)
+        source_url = f"http://{zone_name}"
+        response = get(source_url, allow_redirects=False)
         assert response.status_code == 301
         assert response.headers["Location"] == f"https://{zone_name}/"
+        LOG.info(f"✓ {source_url} → {response.headers['Location']}")
 
-        response = get(f"https://{zone_name}", allow_redirects=False)
+        # Test 2: Root path redirect
+        LOG.info("Testing root path redirect...")
+        source_url = f"https://{zone_name}/"
+        response = get(source_url, allow_redirects=False)
         assert response.status_code == 301
-        assert response.headers["Location"] == f"https://infrahouse.com/"
+        assert (
+            response.headers["Location"] == expected_root
+        ), f"Expected {expected_root}, got {response.headers['Location']}"
+        LOG.info(f"✓ {source_url} → {response.headers['Location']}")
+
+        # Test 3: Path preservation
+        LOG.info("Testing path preservation...")
+        source_url = f"https://{zone_name}/test/path"
+        response = get(source_url, allow_redirects=False)
+        assert response.status_code == 301
+        assert (
+            response.headers["Location"] == expected_path
+        ), f"Expected {expected_path}, got {response.headers['Location']}"
+        LOG.info(f"✓ {source_url} → {response.headers['Location']}")
+
+        # Test 4: Deep path preservation
+        LOG.info("Testing deep path preservation...")
+        source_url = f"https://{zone_name}/deep/nested/path/structure"
+        response = get(source_url, allow_redirects=False)
+        assert response.status_code == 301
+        assert (
+            response.headers["Location"] == expected_deep_path
+        ), f"Expected {expected_deep_path}, got {response.headers['Location']}"
+        LOG.info(f"✓ {source_url} → {response.headers['Location']}")
+
+        # Test 5: Query string preservation (with source query params)
+        LOG.info("Testing query string preservation...")
+        source_url = f"https://{zone_name}/page?foo=bar&baz=qux"
+        response = get(source_url, allow_redirects=False)
+        assert response.status_code == 301
+        location = response.headers["Location"]
+        # Extract redirect_to hostname and path for assertion
+        redirect_base = expected_path.replace("/test/path", "")
+        expected_query_path = f"{redirect_base}/page"
+        assert "foo=bar" in location, f"Query parameter 'foo' not in {location}"
+        assert "baz=qux" in location, f"Query parameter 'baz' not in {location}"
+        assert (
+            expected_query_path in location
+        ), f"Path '{expected_query_path}' not in {location}"
+        LOG.info(f"✓ {source_url} → {location}")
+
+        # Test 6: Path and query string together
+        LOG.info("Testing path + query string preservation...")
+        source_url = f"https://{zone_name}/test/path?param1=value1&param2=value2"
+        response = get(source_url, allow_redirects=False)
+        assert response.status_code == 301
+        location = response.headers["Location"]
+        assert expected_path in location, f"Path '{expected_path}' not in {location}"
+        assert "param1=value1" in location
+        assert "param2=value2" in location
+        LOG.info(f"✓ {source_url} → {location}")
+
+        LOG.info("=" * 70)
+        LOG.info("All redirect tests PASSED!")

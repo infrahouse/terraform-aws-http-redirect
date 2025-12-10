@@ -15,7 +15,7 @@ TEST_REGION="us-east-1"
 TEST_ROLE="arn:aws:iam::303467602807:role/http-redirect-tester"
 TEST_SELECTOR ?= tests/
 TEST_PATH ?= tests/test_module.py
-TEST_FILTER ?= "aws-6"
+TEST_FILTER ?= "aws-6 and path"
 
 help: install-hooks
 	@python -c "$$PRINT_HELP_PYSCRIPT" < Makefile
@@ -39,7 +39,7 @@ test-keep:  ## Run a test and keep resources
 		--aws-region=${TEST_REGION} \
 		--test-role-arn=${TEST_ROLE} \
 		--keep-after \
-		$(if ${TEST_FILTER},-k ${TEST_FILTER}) \
+		$(if ${TEST_FILTER},-k '${TEST_FILTER}') \
 		${TEST_PATH} \
 		2>&1 | tee pytest-`date +%Y%m%d-%H%M%S`-output.log
 

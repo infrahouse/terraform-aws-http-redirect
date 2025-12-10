@@ -18,7 +18,7 @@
 
 ### Phase 2: Important Improvements
 
-- [ ] 2.1 Add Support for URL Path Redirects
+- [x] 2.1 Add Support for URL Path Redirects
 - [ ] 2.2 Replace Deprecated CloudFront forwarded_values with Cache Policies
 - [ ] 2.3 Extract Hostname Logic to locals.tf (Reduce Duplication)
 - [ ] 2.4 Convert count to for_each for DNS Records

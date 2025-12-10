@@ -6,10 +6,33 @@ resource "aws_s3_bucket" "redirect" {
 
 resource "aws_s3_bucket_website_configuration" "redirect" {
   bucket = aws_s3_bucket.redirect.bucket
-  redirect_all_requests_to {
-    host_name = var.redirect_to
-    protocol  = "https"
+
+  index_document {
+    suffix = "index.html"
   }
+
+  routing_rules = local.redirect_path != "" && local.redirect_path != null ? jsonencode(
+    [
+      {
+        Redirect = {
+          HostName             = local.redirect_hostname
+          Protocol             = "https"
+          HttpRedirectCode     = "301"
+          ReplaceKeyPrefixWith = "${trimprefix(local.redirect_path, "/")}/"
+        }
+      }
+    ]
+    ) : jsonencode(
+    [
+      {
+        Redirect = {
+          HostName         = local.redirect_hostname
+          Protocol         = "https"
+          HttpRedirectCode = "301"
+        }
+      }
+    ]
+  )
 }
 
 resource "aws_s3_bucket_public_access_block" "redirect" {
