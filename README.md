@@ -8,9 +8,10 @@ This Terraform module configures an HTTP/HTTPS redirect for one or more hostname
 * Route 53 DNS records (to map domains to the CloudFront distribution)
 
 **Features**
- 
-* Supports HTTPS redirect (301) to a target domain
+
+* Supports HTTPS redirect (301) to a target domain or specific path
 * Redirects preserve paths and query strings
+* Supports both hostname-only (`example.com`) and path redirects (`example.com/landing`)
 * Automatic ACM certificate provisioning and DNS validation
 * CloudFront + S3 origin architecture (cost-efficient and scalable)
 
@@ -22,6 +23,8 @@ This Terraform module configures an HTTP/HTTPS redirect for one or more hostname
 * This setup incurs very low monthly costs, ideal for simple domain forwarding.
 
 ## Usage
+
+### Basic Hostname Redirect
 
 Redirect domains like:
 ```
@@ -44,7 +47,41 @@ module "http-redirect" {
   zone_id            = data.aws_route53_zone.redirect.zone_id
 }
 ```
-> Make sure the hosted zone for example.com exists in Route 53.
+
+**Behavior:**
+- `https://example.com/` → `https://bar.com/`
+- `https://example.com/page` → `https://bar.com/page`
+- `https://example.com/page?query=1` → `https://bar.com/page?query=1`
+
+> Paths and query strings are always preserved during redirects.
+
+### Redirect to Specific Path
+
+Redirect to a specific path on the target domain:
+
+```hcl
+module "http-redirect" {
+  source  = "infrahouse/http-redirect/aws"
+  version = "0.3.0"
+
+  redirect_hostnames = ["old-site", "legacy"]
+  redirect_to        = "new-site.com/welcome"
+  zone_id            = data.aws_route53_zone.redirect.zone_id
+}
+```
+
+**Behavior:**
+- `https://old-site.example.com/` → `https://new-site.com/welcome/`
+- `https://old-site.example.com/about` → `https://new-site.com/welcome/about`
+- `https://old-site.example.com/contact?ref=email` → `https://new-site.com/welcome/contact?ref=email`
+
+> The redirect path is prepended to the request path, and query strings are preserved.
+
+### Notes
+
+- Make sure the hosted zone exists in Route 53
+- Redirects use HTTP 301 (permanent redirect)
+- Query parameters in `redirect_to` are not supported (use path only)
 
 <!-- BEGIN_TF_DOCS -->
 
@@ -88,7 +125,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_redirect_hostnames"></a> [redirect\_hostnames](#input\_redirect\_hostnames) | List of hostname prefixes to redirect (e.g., ['', 'www'] for apex and www<br/>subdomain). Use empty string for apex domain. | `list(string)` | <pre>[<br/>  "",<br/>  "www"<br/>]</pre> | no |
-| <a name="input_redirect_to"></a> [redirect\_to](#input\_redirect\_to) | Target hostname where HTTP(S) requests will be redirected (e.g.,<br/>'example.com'). Do not include protocol (https://). | `string` | n/a | yes |
+| <a name="input_redirect_to"></a> [redirect\_to](#input\_redirect\_to) | Target URL where HTTP(S) requests will be redirected. Can be:<br/>- A hostname: 'example.com'<br/>- A hostname with path: 'example.com/landing'<br/><br/>Note: Query parameters in redirect\_to are not supported due to S3 routing<br/>rule limitations. Source query parameters will be preserved in redirects.<br/>Do not include protocol (https://). | `string` | n/a | yes |
 | <a name="input_zone_id"></a> [zone\_id](#input\_zone\_id) | Route53 hosted zone ID where DNS records will be created | `string` | n/a | yes |
 
 ## Outputs

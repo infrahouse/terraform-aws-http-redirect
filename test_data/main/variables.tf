@@ -4,3 +4,8 @@ variable "role_arn" {
 }
 
 variable "test_zone_id" {}
+
+variable "redirect_to" {
+  description = "Target URL for redirect (can be hostname, hostname/path, or hostname/path?params)"
+  type        = string
+}

@@ -4,7 +4,7 @@ module "test" {
     aws           = aws
     aws.us-east-1 = aws.us-east-1
   }
-  redirect_to        = "infrahouse.com"
+  redirect_to        = var.redirect_to
   redirect_hostnames = ["", "foo", "bar"]
   zone_id            = var.test_zone_id
 }
