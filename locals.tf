@@ -21,4 +21,11 @@ locals {
     for record in var.redirect_hostnames :
     trimprefix(join(".", [record, data.aws_route53_zone.redirect.name]), ".")
   ]
+
+  # Map version for for_each usage in DNS records
+  # Key is the hostname prefix, value is the fully qualified domain name
+  redirect_domains_map = {
+    for record in var.redirect_hostnames :
+    record => trimprefix(join(".", [record, data.aws_route53_zone.redirect.name]), ".")
+  }
 }
