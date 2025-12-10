@@ -1,3 +1,25 @@
+# Cache policy for redirect behavior
+# Forwards query strings to preserve them in redirects
+resource "aws_cloudfront_cache_policy" "redirect" {
+  name        = "redirect-cache-policy-${data.aws_route53_zone.redirect.zone_id}"
+  comment     = "Cache policy for HTTP redirect module"
+  min_ttl     = 0
+  default_ttl = 86400
+  max_ttl     = 31536000
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    query_strings_config {
+      query_string_behavior = "all"
+    }
+    headers_config {
+      header_behavior = "none"
+    }
+    cookies_config {
+      cookie_behavior = "none"
+    }
+  }
+}
+
 resource "aws_cloudfront_distribution" "redirect" {
   enabled             = true
   is_ipv6_enabled     = true
@@ -20,12 +42,7 @@ resource "aws_cloudfront_distribution" "redirect" {
     cached_methods         = ["GET", "HEAD"]
     target_origin_id       = "redirect-origin"
     viewer_protocol_policy = "redirect-to-https"
-    forwarded_values {
-      query_string = true
-      cookies {
-        forward = "none"
-      }
-    }
+    cache_policy_id        = aws_cloudfront_cache_policy.redirect.id
   }
   #
   viewer_certificate {

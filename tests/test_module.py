@@ -89,46 +89,58 @@ def test_module(
         LOG.info(f"Testing redirect_to={redirect_to}")
         LOG.info("=" * 70)
 
+        # Add timestamp for cache-busting to avoid CloudFront caching between tests
+        import time
+
+        cache_bust = f"cachebust={int(time.time() * 1000)}"
+
         # Test 1: HTTP to HTTPS redirect (always redirects to HTTPS version of source)
-        source_url = f"http://{zone_name}"
+        source_url = f"http://{zone_name}?{cache_bust}"
         response = get(source_url, allow_redirects=False)
         assert response.status_code == 301
-        assert response.headers["Location"] == f"https://{zone_name}/"
+        # Location should redirect to HTTPS with cache-bust param preserved
+        assert response.headers["Location"].startswith(f"https://{zone_name}/")
+        assert cache_bust in response.headers["Location"]
         LOG.info(f"✓ {source_url} → {response.headers['Location']}")
 
         # Test 2: Root path redirect
         LOG.info("Testing root path redirect...")
-        source_url = f"https://{zone_name}/"
+        source_url = f"https://{zone_name}/?{cache_bust}"
         response = get(source_url, allow_redirects=False)
         assert response.status_code == 301
+        # Check that the path part matches (ignoring cache-bust query param)
+        location_without_query = response.headers["Location"].split("?")[0]
+        expected_without_query = expected_root.rstrip("?")
         assert (
-            response.headers["Location"] == expected_root
-        ), f"Expected {expected_root}, got {response.headers['Location']}"
+            location_without_query == expected_without_query
+        ), f"Expected {expected_without_query}, got {location_without_query}"
         LOG.info(f"✓ {source_url} → {response.headers['Location']}")
 
         # Test 3: Path preservation
         LOG.info("Testing path preservation...")
-        source_url = f"https://{zone_name}/test/path"
+        source_url = f"https://{zone_name}/test/path?{cache_bust}"
         response = get(source_url, allow_redirects=False)
         assert response.status_code == 301
+        location_path = response.headers["Location"].split("?")[0]
         assert (
-            response.headers["Location"] == expected_path
-        ), f"Expected {expected_path}, got {response.headers['Location']}"
+            location_path == expected_path
+        ), f"Expected {expected_path}, got {location_path}"
         LOG.info(f"✓ {source_url} → {response.headers['Location']}")
 
         # Test 4: Deep path preservation
         LOG.info("Testing deep path preservation...")
-        source_url = f"https://{zone_name}/deep/nested/path/structure"
+        source_url = f"https://{zone_name}/deep/nested/path/structure?{cache_bust}"
         response = get(source_url, allow_redirects=False)
         assert response.status_code == 301
+        location_path = response.headers["Location"].split("?")[0]
         assert (
-            response.headers["Location"] == expected_deep_path
-        ), f"Expected {expected_deep_path}, got {response.headers['Location']}"
+            location_path == expected_deep_path
+        ), f"Expected {expected_deep_path}, got {location_path}"
         LOG.info(f"✓ {source_url} → {response.headers['Location']}")
 
         # Test 5: Query string preservation (with source query params)
         LOG.info("Testing query string preservation...")
-        source_url = f"https://{zone_name}/page?foo=bar&baz=qux"
+        source_url = f"https://{zone_name}/page?foo=bar&baz=qux&{cache_bust}"
         response = get(source_url, allow_redirects=False)
         assert response.status_code == 301
         location = response.headers["Location"]
@@ -144,7 +156,7 @@ def test_module(
 
         # Test 6: Path and query string together
         LOG.info("Testing path + query string preservation...")
-        source_url = f"https://{zone_name}/test/path?param1=value1&param2=value2"
+        source_url = f"https://{zone_name}/test/path?param1=value1&param2=value2&{cache_bust}"
         response = get(source_url, allow_redirects=False)
         assert response.status_code == 301
         location = response.headers["Location"]
