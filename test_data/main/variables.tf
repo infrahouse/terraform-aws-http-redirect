@@ -3,4 +3,4 @@ variable "role_arn" {
   default = null
 }
 
-variable "test_zone_name" {}
+variable "test_zone_id" {}

@@ -45,17 +45,20 @@ module "http-redirect" {
 }
 ```
 > Make sure the hosted zone for example.com exists in Route 53.
+
+<!-- BEGIN_TF_DOCS -->
+
 ## Requirements
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5.62 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.62, < 7.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5.62 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.62, < 7.0 |
 
 ## Modules
 
@@ -68,11 +71,14 @@ No modules.
 | [aws_acm_certificate.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate) | resource |
 | [aws_acm_certificate_validation.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate_validation) | resource |
 | [aws_cloudfront_distribution.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution) | resource |
+| [aws_route53_record.caa_record](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
 | [aws_route53_record.cert_validation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
 | [aws_route53_record.extra](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
 | [aws_s3_bucket.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket_policy.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
 | [aws_s3_bucket_public_access_block.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
 | [aws_s3_bucket_website_configuration.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_website_configuration) | resource |
+| [aws_iam_policy_document.enforce_ssl_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_route53_zone.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
 
 ## Inputs
@@ -86,3 +92,4 @@ No modules.
 ## Outputs
 
 No outputs.
+<!-- END_TF_DOCS -->
