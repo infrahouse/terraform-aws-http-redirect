@@ -1,8 +1,8 @@
 resource "aws_route53_record" "extra" {
-  count   = length(var.redirect_hostnames)
-  zone_id = var.zone_id
-  name    = local.redirect_domains[count.index]
-  type    = "A"
+  for_each = local.redirect_domains_map
+  zone_id  = var.zone_id
+  name     = each.value
+  type     = "A"
   alias {
     evaluate_target_health = false
     name                   = aws_cloudfront_distribution.redirect.domain_name
@@ -11,10 +11,10 @@ resource "aws_route53_record" "extra" {
 }
 
 resource "aws_route53_record" "extra_aaaa" {
-  count   = length(var.redirect_hostnames)
-  zone_id = var.zone_id
-  name    = local.redirect_domains[count.index]
-  type    = "AAAA"
+  for_each = local.redirect_domains_map
+  zone_id  = var.zone_id
+  name     = each.value
+  type     = "AAAA"
   alias {
     evaluate_target_health = false
     name                   = aws_cloudfront_distribution.redirect.domain_name
@@ -23,11 +23,11 @@ resource "aws_route53_record" "extra_aaaa" {
 }
 
 resource "aws_route53_record" "caa_record" {
-  count   = length(var.redirect_hostnames)
-  zone_id = var.zone_id
-  name    = local.redirect_domains[count.index]
-  type    = "CAA"
-  ttl     = 300
+  for_each = local.redirect_domains_map
+  zone_id  = var.zone_id
+  name     = each.value
+  type     = "CAA"
+  ttl      = 300
   records = [
     "0 issue \"amazon.com\"",
     "0 issuewild \";\""

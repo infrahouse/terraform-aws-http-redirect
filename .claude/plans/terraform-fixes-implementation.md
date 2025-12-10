@@ -21,7 +21,7 @@
 - [x] 2.1 Add Support for URL Path Redirects
 - [x] 2.2 Replace Deprecated CloudFront forwarded_values with Cache Policies
 - [x] 2.3 Extract Hostname Logic to locals.tf (Reduce Duplication)
-- [ ] 2.4 Convert count to for_each for DNS Records
+- [x] 2.4 Convert count to for_each for DNS Records
 - [ ] 2.5 Add CloudFront Price Class Variable
 
 ### Phase 3: Security Enhancements
@@ -51,7 +51,7 @@
 - [ ] 6.3 Add Troubleshooting Guide
 - [ ] 6.4 Add Architecture Diagram
 
-**Progress:** 8/25 tasks completed
+**Progress:** 9/25 tasks completed
 
 ---
 
