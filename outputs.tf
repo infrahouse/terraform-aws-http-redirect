@@ -30,9 +30,7 @@ output "acm_certificate_arn" {
 
 output "redirect_domains" {
   description = "List of fully qualified domain names that redirect to the target (computed from redirect_hostnames and zone)"
-  value = [
-    for record in var.redirect_hostnames : trimprefix(join(".", [record, data.aws_route53_zone.redirect.name]), ".")
-  ]
+  value       = local.redirect_domains
 }
 
 output "dns_a_records" {
