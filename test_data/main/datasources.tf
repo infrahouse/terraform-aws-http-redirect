@@ -4,5 +4,5 @@ data "aws_availability_zones" "available" {
 }
 
 data "aws_route53_zone" "test-zone" {
-  name = var.test_zone_name
+  zone_id = var.test_zone_id
 }

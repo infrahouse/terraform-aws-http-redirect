@@ -4,6 +4,7 @@ from pprint import pprint
 from textwrap import dedent
 from time import sleep
 
+import pytest
 from infrahouse_core.aws import get_client
 from pytest_infrahouse import terraform_apply
 from requests import get
@@ -11,23 +12,35 @@ from requests import get
 from tests.conftest import (
     LOG,
     TERRAFORM_ROOT_DIR,
+    update_terraform_tf,
+    cleanup_dot_terraform,
 )
 
 
+@pytest.mark.parametrize(
+    "aws_provider_version", ["~> 5.56", "~> 6.0"], ids=["aws-5", "aws-6"]
+)
 def test_module(
+    subzone,
     test_role_arn,
     keep_after,
     aws_region,
-    test_zone_name,
+    boto3_session,
+    aws_provider_version,
 ):
+    # Get zone ID from subzone fixture
+    zone_id = subzone["subzone_id"]["value"]
 
     terraform_module_dir = osp.join(TERRAFORM_ROOT_DIR, "main")
+    cleanup_dot_terraform(terraform_module_dir)
+    update_terraform_tf(terraform_module_dir, aws_provider_version)
+
     with open(osp.join(terraform_module_dir, "terraform.tfvars"), "w") as fp:
         fp.write(
             dedent(
                 f"""
-                    region         = "{aws_region}"
-                    test_zone_name = "{test_zone_name}"
+                    region       = "{aws_region}"
+                    test_zone_id = "{zone_id}"
                     """
             )
         )
@@ -35,7 +48,7 @@ def test_module(
             fp.write(
                 dedent(
                     f"""
-                    role_arn        = "{test_role_arn}"
+                    role_arn = "{test_role_arn}"
                     """
                 )
             )
@@ -46,10 +59,11 @@ def test_module(
         json_output=True,
     ) as tf_output:
         LOG.info("%s", json.dumps(tf_output, indent=4))
-        response = get(f"http://{test_zone_name}", allow_redirects=False)
+        zone_name = tf_output["zone_name"]["value"]
+        response = get(f"http://{zone_name}", allow_redirects=False)
         assert response.status_code == 301
-        assert response.headers["Location"] == f"https://{test_zone_name}/"
+        assert response.headers["Location"] == f"https://{zone_name}/"
 
-        response = get(f"https://{test_zone_name}", allow_redirects=False)
+        response = get(f"https://{zone_name}", allow_redirects=False)
         assert response.status_code == 301
         assert response.headers["Location"] == f"https://infrahouse.com/"
