@@ -4,6 +4,16 @@ resource "aws_s3_bucket" "redirect" {
   tags          = local.default_module_tags
 }
 
+resource "aws_s3_bucket_server_side_encryption_configuration" "redirect" {
+  bucket = aws_s3_bucket.redirect.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
 resource "aws_s3_bucket_website_configuration" "redirect" {
   bucket = aws_s3_bucket.redirect.bucket
 
