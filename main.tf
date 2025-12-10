@@ -57,9 +57,7 @@ resource "aws_cloudfront_distribution" "redirect" {
     }
   }
 
-  aliases = [
-    for record in var.redirect_hostnames : trimprefix(join(".", [record, data.aws_route53_zone.redirect.name]), ".")
-  ]
+  aliases = local.redirect_domains
   tags = merge(
     local.default_module_tags,
     {

@@ -1,10 +1,8 @@
 resource "aws_acm_certificate" "redirect" {
-  provider          = aws.us-east-1
-  domain_name       = trimprefix(join(".", [var.redirect_hostnames[0], data.aws_route53_zone.redirect.name]), ".")
-  validation_method = "DNS"
-  subject_alternative_names = [
-    for record in var.redirect_hostnames : trimprefix(join(".", [record, data.aws_route53_zone.redirect.name]), ".")
-  ]
+  provider                  = aws.us-east-1
+  domain_name               = local.redirect_domains[0]
+  validation_method         = "DNS"
+  subject_alternative_names = local.redirect_domains
   lifecycle {
     create_before_destroy = true
   }
