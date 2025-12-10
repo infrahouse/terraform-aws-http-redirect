@@ -59,6 +59,7 @@ module "http-redirect" {
 | Name | Version |
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.62, < 7.0 |
+| <a name="provider_aws.us-east-1"></a> [aws.us-east-1](#provider\_aws.us-east-1) | >= 5.62, < 7.0 |
 
 ## Modules
 
@@ -74,6 +75,7 @@ No modules.
 | [aws_route53_record.caa_record](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
 | [aws_route53_record.cert_validation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
 | [aws_route53_record.extra](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
+| [aws_route53_record.extra_aaaa](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
 | [aws_s3_bucket.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket_policy.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
 | [aws_s3_bucket_public_access_block.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
@@ -85,11 +87,22 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_redirect_hostnames"></a> [redirect\_hostnames](#input\_redirect\_hostnames) | Name of application | `list(string)` | <pre>[<br/>  "",<br/>  "www"<br/>]</pre> | no |
-| <a name="input_redirect_to"></a> [redirect\_to](#input\_redirect\_to) | Hostname where to redirect HTTP(S) requests to | `string` | n/a | yes |
-| <a name="input_zone_id"></a> [zone\_id](#input\_zone\_id) | Zone ID where the redirect\_hostnames records will be created | `string` | n/a | yes |
+| <a name="input_redirect_hostnames"></a> [redirect\_hostnames](#input\_redirect\_hostnames) | List of hostname prefixes to redirect (e.g., ['', 'www'] for apex and www<br/>subdomain). Use empty string for apex domain. | `list(string)` | <pre>[<br/>  "",<br/>  "www"<br/>]</pre> | no |
+| <a name="input_redirect_to"></a> [redirect\_to](#input\_redirect\_to) | Target hostname where HTTP(S) requests will be redirected (e.g.,<br/>'example.com'). Do not include protocol (https://). | `string` | n/a | yes |
+| <a name="input_zone_id"></a> [zone\_id](#input\_zone\_id) | Route53 hosted zone ID where DNS records will be created | `string` | n/a | yes |
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_acm_certificate_arn"></a> [acm\_certificate\_arn](#output\_acm\_certificate\_arn) | The ARN of the ACM certificate used by CloudFront (provisioned in us-east-1) |
+| <a name="output_caa_records"></a> [caa\_records](#output\_caa\_records) | Map of CAA records created for redirect domains (key: domain name, value: record details) |
+| <a name="output_cloudfront_distribution_arn"></a> [cloudfront\_distribution\_arn](#output\_cloudfront\_distribution\_arn) | The ARN (Amazon Resource Name) for the CloudFront distribution |
+| <a name="output_cloudfront_distribution_id"></a> [cloudfront\_distribution\_id](#output\_cloudfront\_distribution\_id) | The identifier for the CloudFront distribution |
+| <a name="output_cloudfront_domain_name"></a> [cloudfront\_domain\_name](#output\_cloudfront\_domain\_name) | The domain name corresponding to the CloudFront distribution (e.g., d111111abcdef8.cloudfront.net) |
+| <a name="output_dns_a_records"></a> [dns\_a\_records](#output\_dns\_a\_records) | Map of A records created for redirect domains (key: domain name, value: record details) |
+| <a name="output_dns_aaaa_records"></a> [dns\_aaaa\_records](#output\_dns\_aaaa\_records) | Map of AAAA records created for redirect domains (key: domain name, value: record details) |
+| <a name="output_redirect_domains"></a> [redirect\_domains](#output\_redirect\_domains) | List of fully qualified domain names that redirect to the target (computed from redirect\_hostnames and zone) |
+| <a name="output_s3_bucket_arn"></a> [s3\_bucket\_arn](#output\_s3\_bucket\_arn) | The ARN of the S3 bucket used as the redirect origin |
+| <a name="output_s3_bucket_name"></a> [s3\_bucket\_name](#output\_s3\_bucket\_name) | The name of the S3 bucket used as the redirect origin |
 <!-- END_TF_DOCS -->
