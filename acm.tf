@@ -1,4 +1,5 @@
 resource "aws_acm_certificate" "redirect" {
+  provider          = aws.us-east-1
   domain_name       = trimprefix(join(".", [var.redirect_hostnames[0], data.aws_route53_zone.redirect.name]), ".")
   validation_method = "DNS"
   subject_alternative_names = [
@@ -17,6 +18,7 @@ resource "aws_acm_certificate" "redirect" {
 }
 
 resource "aws_route53_record" "cert_validation" {
+  provider = aws.us-east-1
   for_each = {
     for dvo in aws_acm_certificate.redirect.domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
@@ -34,6 +36,7 @@ resource "aws_route53_record" "cert_validation" {
 }
 
 resource "aws_acm_certificate_validation" "redirect" {
+  provider        = aws.us-east-1
   certificate_arn = aws_acm_certificate.redirect.arn
   validation_record_fqdns = [
     for d in aws_route53_record.cert_validation : d.fqdn
