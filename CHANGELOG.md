@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0] - 2025-12-11
+
+### Bug Fixes
+
+- Permissions on Terraform files
+
+### Documentation
+
+- Add comprehensive documentation for v1.0.0 release
+
+### Features
+
+- Implement Phase 1 critical fixes for v1.0.0
+- Add support for URL path redirects
+- Replace deprecated CloudFront forwarded_values with cache policies
+- Add CloudFront price class variable for cost optimization
+- Add S3 bucket encryption for compliance
+- Add CloudFront access logging with infrahouse/s3-bucket module
+- Add optional WAF integration for DDoS protection and rate limiting
+- Add security enhancements for Phase 4
+
+### Miscellaneous Tasks
+
+- Improve development workflow and testing infrastructure
+- Initialize CHANGELOG with git-cliff
+
+### Refactor
+
+- Extract hostname logic to locals.tf to reduce duplication
+- Convert DNS records from count to for_each for better state management
+
+### Testing
+
+- Verify comprehensive test coverage for Phase 5
+
 ## [unreleased]
 
 ### Bug Fixes
