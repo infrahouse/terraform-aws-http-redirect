@@ -77,6 +77,244 @@ module "http-redirect" {
 
 > The redirect path is prepended to the request path, and query strings are preserved.
 
+### Provider Configuration
+
+**CRITICAL:** This module requires a dual-provider configuration. CloudFront requires ACM certificates to be in the `us-east-1` region, regardless of where other resources are created.
+
+```hcl
+# Configure the main AWS provider for your desired region
+provider "aws" {
+  region = "us-west-2"  # Your primary region
+}
+
+# Configure a second provider specifically for us-east-1
+# This is required for ACM certificate provisioning
+provider "aws" {
+  alias  = "us-east-1"
+  region = "us-east-1"
+}
+
+data "aws_route53_zone" "redirect" {
+  name = "example.com"
+}
+
+module "http-redirect" {
+  source  = "infrahouse/http-redirect/aws"
+  version = "1.0.0"
+
+  redirect_hostnames = ["", "www"]
+  redirect_to        = "target.com"
+  zone_id            = data.aws_route53_zone.redirect.zone_id
+
+  providers = {
+    aws           = aws
+    aws.us-east-1 = aws.us-east-1
+  }
+}
+```
+
+**Why us-east-1?** CloudFront is a global service that requires ACM certificates to be provisioned in the `us-east-1` region. This is an AWS requirement, not a module limitation. The module automatically handles this by using the `aws.us-east-1` provider for certificate operations while creating other resources in your primary region.
+
+## Cost Considerations
+
+This module creates several AWS resources with associated costs:
+
+### CloudFront Price Classes
+
+The `cloudfront_price_class` variable controls which edge locations are used and directly impacts cost:
+
+| Price Class | Edge Locations | Typical Monthly Cost* | Use Case |
+|-------------|----------------|----------------------|----------|
+| `PriceClass_100` | US, Canada, Europe | ~$1-5 | Lowest cost, good for North America/Europe traffic |
+| `PriceClass_200` | PriceClass_100 + Asia, Africa, Oceania, Middle East | ~$2-10 | Moderate cost, broader geographic coverage |
+| `PriceClass_All` | All edge locations worldwide | ~$3-15 | Highest cost, best global performance |
+
+\* Estimated for a low-traffic redirect service (< 10,000 requests/month). Actual costs depend on request volume and data transfer.
+
+### Additional Costs
+
+- **S3 Storage**: Negligible (< $0.10/month) - bucket contains only redirect configuration
+- **Route 53 Hosted Zone**: $0.50/month per zone (if not already existing)
+- **Route 53 Queries**: $0.40 per million queries for A/AAAA records
+- **ACM Certificate**: Free
+- **CloudFront Requests**: $0.0075-0.016 per 10,000 HTTPS requests (varies by region)
+- **WAF (if enabled)**: $5/month per web ACL + $1 per million requests
+
+**Recommendation:** Start with `PriceClass_100` (default) for most use cases. Upgrade to `PriceClass_200` or `PriceClass_All` only if you need better performance in Asia-Pacific, Africa, or South America.
+
+For detailed AWS pricing, see:
+- [CloudFront Pricing](https://aws.amazon.com/cloudfront/pricing/)
+- [Route 53 Pricing](https://aws.amazon.com/route53/pricing/)
+- [AWS WAF Pricing](https://aws.amazon.com/waf/pricing/)
+
+## Troubleshooting
+
+### Common Issues
+
+#### Certificate Validation Timeout
+
+**Error:** `Error waiting for ACM Certificate validation: timeout while waiting for state to become 'ISSUED'`
+
+**Cause:** DNS validation records not properly created or propagated.
+
+**Solution:**
+1. Verify the Route 53 hosted zone is publicly accessible:
+   ```bash
+   dig NS example.com
+   ```
+2. Check that nameservers match your Route 53 zone's NS records
+3. Wait 5-10 minutes for DNS propagation
+4. Retry `terraform apply`
+
+#### Provider Configuration Error
+
+**Error:** `Provider configuration not present` or `Module does not support aws.us-east-1 provider`
+
+**Cause:** Missing or incorrect provider configuration.
+
+**Solution:** Ensure you have both providers configured (see Provider Configuration section above):
+```hcl
+provider "aws" {
+  region = "us-west-2"  # Your region
+}
+
+provider "aws" {
+  alias  = "us-east-1"
+  region = "us-east-1"
+}
+
+module "http-redirect" {
+  # ... other configuration ...
+  providers = {
+    aws           = aws
+    aws.us-east-1 = aws.us-east-1
+  }
+}
+```
+
+#### Redirect Not Working
+
+**Symptoms:** Accessing the domain shows CloudFront error or times out.
+
+**Solution:**
+1. Verify DNS records are created:
+   ```bash
+   dig A www.example.com
+   dig AAAA www.example.com
+   ```
+   Should point to CloudFront distribution (format: `d111111abcdef8.cloudfront.net`)
+
+2. Check CloudFront distribution status:
+   ```bash
+   aws cloudfront get-distribution --id <distribution-id>
+   ```
+   Status should be "Deployed" (initial deployment takes 15-30 minutes)
+
+3. Test redirect manually:
+   ```bash
+   curl -I https://www.example.com
+   ```
+   Should return HTTP 301 with Location header
+
+#### S3 Bucket Name Conflict
+
+**Error:** `BucketAlreadyExists` or `BucketAlreadyOwnedByYou`
+
+**Cause:** S3 bucket names are globally unique. Someone else may own the bucket name derived from your hostname.
+
+**Solution:** This typically happens if:
+- You previously created and deleted the bucket (takes 24 hours to fully delete)
+- Another AWS account owns a bucket with the same name
+
+Wait 24 hours and retry, or choose a different hostname prefix that generates a unique bucket name.
+
+### Verification Steps
+
+After successful deployment, verify the redirect works:
+
+```bash
+# Test HTTP to HTTPS redirect
+curl -I http://www.example.com
+
+# Test HTTPS redirect to target
+curl -I https://www.example.com
+
+# Test path preservation
+curl -I https://www.example.com/some/path
+
+# Test query string preservation
+curl -I "https://www.example.com/page?foo=bar&baz=qux"
+```
+
+Expected responses:
+- HTTP request: 301 redirect to HTTPS version
+- HTTPS request: 301 redirect to target domain
+- Location header should preserve path and query parameters
+
+### Logging and Debugging
+
+CloudFront access logs (enabled by default) are stored in the S3 logging bucket:
+
+```bash
+# List recent log files
+aws s3 ls s3://example-com-cloudfront-logs/cloudfront-logs/ --recursive
+
+# Download and analyze logs
+aws s3 cp s3://example-com-cloudfront-logs/cloudfront-logs/ ./logs/ --recursive
+```
+
+Log format: [CloudFront Standard Log Format](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html#BasicDistributionFileFormat)
+
+## Architecture
+
+This module creates the following AWS resources:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         DNS Resolution                          │
+│  example.com, www.example.com (Route 53 A/AAAA records)         │
+└────────────────────────┬────────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   CloudFront Distribution                       │
+│  • TLS termination (ACM certificate from us-east-1)             │
+│  • HTTP → HTTPS redirect (viewer protocol policy)               │
+│  • Caching with query string forwarding                         │
+│  • Security headers (HSTS, X-Frame-Options, etc.)               │
+└────────────────────────┬────────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              S3 Bucket (Website Hosting Mode)                   │
+│  • Routing rules for redirects                                  │
+│  • Preserves paths and query strings                            │
+│  • Returns HTTP 301 to target domain                            │
+└─────────────────────────────────────────────────────────────────┘
+                         │
+                         ▼
+                  target.com/path
+```
+
+**Data Flow:**
+
+1. User requests `https://www.example.com/page?foo=bar`
+2. DNS resolves to CloudFront distribution
+3. CloudFront terminates TLS using ACM certificate (from us-east-1)
+4. CloudFront forwards request to S3 website endpoint
+5. S3 returns HTTP 301 with Location: `https://target.com/page?foo=bar`
+6. CloudFront caches response and returns to user
+7. User's browser follows redirect to target domain
+
+**Key Resources:**
+
+- **Route 53 Records**: A/AAAA aliases pointing to CloudFront
+- **CloudFront Distribution**: Global CDN with TLS and caching
+- **ACM Certificate**: TLS certificate (us-east-1 only)
+- **S3 Bucket**: Static website with redirect rules
+- **CloudFront Logs Bucket**: Access logs for compliance and debugging
+- **Security Policies**: Cache policy + Response headers policy
+
 ### Notes
 
 - Make sure the hosted zone exists in Route 53
