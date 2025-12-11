@@ -33,9 +33,9 @@
 
 ### Phase 4: Nice-to-Have Enhancements
 
-- [ ] 4.1 Add Security Headers Policy
-- [ ] 4.3 Add Complete Tagging to All Resources
-- [ ] 4.4 Increase ACM Validation TTL from 60 to 300
+- [x] 4.1 Add Security Headers Policy
+- [x] 4.3 Add Complete Tagging to All Resources
+- [x] 4.4 Increase ACM Validation TTL from 60 to 300
 
 ### Phase 5: Testing Improvements
 
@@ -51,7 +51,7 @@
 - [ ] 6.3 Add Troubleshooting Guide
 - [ ] 6.4 Add Architecture Diagram
 
-**Progress:** 13/25 tasks completed
+**Progress:** 16/25 tasks completed
 
 ---
 

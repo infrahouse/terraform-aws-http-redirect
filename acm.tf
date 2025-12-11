@@ -30,7 +30,7 @@ resource "aws_route53_record" "cert_validation" {
   records = [
     each.value.record
   ]
-  ttl = 60
+  ttl = 300
 }
 
 resource "aws_acm_certificate_validation" "redirect" {
