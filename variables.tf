@@ -116,3 +116,19 @@ variable "cloudfront_logging_bucket_force_destroy" {
   type        = bool
   default     = false
 }
+
+variable "web_acl_id" {
+  description = <<-EOT
+    Optional AWS WAF Web ACL ARN to attach to the CloudFront distribution.
+    Provides DDoS protection and rate limiting for the redirect service.
+
+    Leave null (default) for most use cases. Consider enabling if:
+    - You have compliance requirements for WAF on all resources
+    - You're experiencing abuse or high request volumes
+    - You need IP-based access controls
+
+    Note: AWS WAF incurs additional costs per web ACL and per million requests.
+  EOT
+  type        = string
+  default     = null
+}
