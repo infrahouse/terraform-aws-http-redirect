@@ -45,6 +45,16 @@ resource "aws_cloudfront_distribution" "redirect" {
     viewer_protocol_policy = "redirect-to-https"
     cache_policy_id        = aws_cloudfront_cache_policy.redirect.id
   }
+
+  # Logging enabled by default for compliance (ISO 27001, SOC 2)
+  dynamic "logging_config" {
+    for_each = var.create_logging_bucket ? [1] : []
+    content {
+      bucket          = local.cloudfront_logging_bucket
+      include_cookies = var.cloudfront_logging_include_cookies
+      prefix          = var.cloudfront_logging_prefix
+    }
+  }
   #
   viewer_certificate {
     acm_certificate_arn      = aws_acm_certificate_validation.redirect.certificate_arn

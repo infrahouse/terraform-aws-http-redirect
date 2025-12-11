@@ -27,8 +27,8 @@
 ### Phase 3: Security Enhancements
 
 - [x] 3.1 Add S3 Bucket Encryption
-- [ ] 3.2 Make CAA Records Optional
-- [ ] 3.3 Add CloudFront Logging with infrahouse/s3-bucket module
+- [~] 3.2 Make CAA Records Optional (SKIPPED - solves non-problem)
+- [x] 3.3 Add CloudFront Logging with infrahouse/s3-bucket module
 - [ ] 3.4 Add Optional WAF Integration
 
 ### Phase 4: Nice-to-Have Enhancements
@@ -51,7 +51,7 @@
 - [ ] 6.3 Add Troubleshooting Guide
 - [ ] 6.4 Add Architecture Diagram
 
-**Progress:** 11/25 tasks completed
+**Progress:** 12/25 tasks completed
 
 ---
 

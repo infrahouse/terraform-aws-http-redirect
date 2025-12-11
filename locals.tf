@@ -28,4 +28,12 @@ locals {
     for record in var.redirect_hostnames :
     record => trimprefix(join(".", [record, data.aws_route53_zone.redirect.name]), ".")
   }
+
+  # CloudFront logging bucket domain name (for logging_config)
+  # Format: bucket-name.s3.amazonaws.com
+  cloudfront_logging_bucket = (
+    var.create_logging_bucket ?
+    module.cloudfront_logs_bucket[0].bucket_domain_name :
+    null
+  )
 }

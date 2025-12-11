@@ -100,7 +100,9 @@ module "http-redirect" {
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_cloudfront_logs_bucket"></a> [cloudfront\_logs\_bucket](#module\_cloudfront\_logs\_bucket) | registry.infrahouse.com/infrahouse/s3-bucket/aws | 0.3.0 |
 
 ## Resources
 
@@ -119,6 +121,7 @@ No modules.
 | [aws_s3_bucket_public_access_block.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
 | [aws_s3_bucket_server_side_encryption_configuration.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
 | [aws_s3_bucket_website_configuration.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_website_configuration) | resource |
+| [aws_iam_policy_document.cloudfront_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.enforce_ssl_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_route53_zone.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
 
@@ -126,7 +129,11 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_cloudfront_logging_bucket_force_destroy"></a> [cloudfront\_logging\_bucket\_force\_destroy](#input\_cloudfront\_logging\_bucket\_force\_destroy) | Allow destruction of the CloudFront logging bucket even if it contains log files.<br/>Set to true in test/dev environments. Should remain false in production to prevent<br/>accidental data loss. | `bool` | `false` | no |
+| <a name="input_cloudfront_logging_include_cookies"></a> [cloudfront\_logging\_include\_cookies](#input\_cloudfront\_logging\_include\_cookies) | Include cookies in CloudFront logs | `bool` | `false` | no |
+| <a name="input_cloudfront_logging_prefix"></a> [cloudfront\_logging\_prefix](#input\_cloudfront\_logging\_prefix) | Prefix for CloudFront log files in the logging bucket | `string` | `"cloudfront-logs/"` | no |
 | <a name="input_cloudfront_price_class"></a> [cloudfront\_price\_class](#input\_cloudfront\_price\_class) | CloudFront distribution price class. Controls which edge locations are used<br/>and affects cost:<br/>- PriceClass\_100: US, Canada, Europe (lowest cost)<br/>- PriceClass\_200: PriceClass\_100 + Asia, Africa, Oceania, Middle East<br/>- PriceClass\_All: All edge locations (highest cost, best performance globally) | `string` | `"PriceClass_100"` | no |
+| <a name="input_create_logging_bucket"></a> [create\_logging\_bucket](#input\_create\_logging\_bucket) | Create an S3 bucket for CloudFront logs using infrahouse/s3-bucket/aws module.<br/>Enables ISO 27001/SOC 2 compliant logging by default. Set to false to disable<br/>logging (not recommended for production). | `bool` | `true` | no |
 | <a name="input_redirect_hostnames"></a> [redirect\_hostnames](#input\_redirect\_hostnames) | List of hostname prefixes to redirect (e.g., ['', 'www'] for apex and www<br/>subdomain). Use empty string for apex domain. | `list(string)` | <pre>[<br/>  "",<br/>  "www"<br/>]</pre> | no |
 | <a name="input_redirect_to"></a> [redirect\_to](#input\_redirect\_to) | Target URL where HTTP(S) requests will be redirected. Can be:<br/>- A hostname: 'example.com'<br/>- A hostname with path: 'example.com/landing'<br/><br/>Note: Query parameters in redirect\_to are not supported due to S3 routing<br/>rule limitations. Source query parameters will be preserved in redirects.<br/>Do not include protocol (https://). | `string` | n/a | yes |
 | <a name="input_zone_id"></a> [zone\_id](#input\_zone\_id) | Route53 hosted zone ID where DNS records will be created | `string` | n/a | yes |
@@ -140,6 +147,8 @@ No modules.
 | <a name="output_cloudfront_distribution_arn"></a> [cloudfront\_distribution\_arn](#output\_cloudfront\_distribution\_arn) | The ARN (Amazon Resource Name) for the CloudFront distribution |
 | <a name="output_cloudfront_distribution_id"></a> [cloudfront\_distribution\_id](#output\_cloudfront\_distribution\_id) | The identifier for the CloudFront distribution |
 | <a name="output_cloudfront_domain_name"></a> [cloudfront\_domain\_name](#output\_cloudfront\_domain\_name) | The domain name corresponding to the CloudFront distribution (e.g., d111111abcdef8.cloudfront.net) |
+| <a name="output_cloudfront_logs_bucket_arn"></a> [cloudfront\_logs\_bucket\_arn](#output\_cloudfront\_logs\_bucket\_arn) | ARN of the S3 bucket for CloudFront access logs (null if logging disabled) |
+| <a name="output_cloudfront_logs_bucket_name"></a> [cloudfront\_logs\_bucket\_name](#output\_cloudfront\_logs\_bucket\_name) | Name of the S3 bucket for CloudFront access logs (null if logging disabled) |
 | <a name="output_dns_a_records"></a> [dns\_a\_records](#output\_dns\_a\_records) | Map of A records created for redirect domains (key: domain name, value: record details) |
 | <a name="output_dns_aaaa_records"></a> [dns\_aaaa\_records](#output\_dns\_aaaa\_records) | Map of AAAA records created for redirect domains (key: domain name, value: record details) |
 | <a name="output_redirect_domains"></a> [redirect\_domains](#output\_redirect\_domains) | List of fully qualified domain names that redirect to the target (computed from redirect\_hostnames and zone) |
