@@ -11,7 +11,7 @@ for line in sys.stdin:
 endef
 export PRINT_HELP_PYSCRIPT
 
-TEST_REGION="us-east-1"
+TEST_REGION="us-west-2"
 TEST_ROLE="arn:aws:iam::303467602807:role/http-redirect-tester"
 TEST_SELECTOR ?= tests/
 TEST_PATH ?= tests/test_module.py
@@ -31,7 +31,7 @@ install-hooks:  ## Install repo hooks
 
 .PHONY: test
 test:  ## Run tests on the module
-	pytest -xvvs ${TEST_SELECTOR}
+	pytest -xvvs --aws-region ${TEST_REGION} ${TEST_SELECTOR}
 
 .PHONY: test-keep
 test-keep:  ## Run a test and keep resources
