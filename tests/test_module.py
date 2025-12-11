@@ -156,7 +156,9 @@ def test_module(
 
         # Test 6: Path and query string together
         LOG.info("Testing path + query string preservation...")
-        source_url = f"https://{zone_name}/test/path?param1=value1&param2=value2&{cache_bust}"
+        source_url = (
+            f"https://{zone_name}/test/path?param1=value1&param2=value2&{cache_bust}"
+        )
         response = get(source_url, allow_redirects=False)
         assert response.status_code == 301
         location = response.headers["Location"]

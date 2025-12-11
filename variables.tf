@@ -84,3 +84,35 @@ variable "cloudfront_price_class" {
     EOT
   }
 }
+
+variable "create_logging_bucket" {
+  description = <<-EOT
+    Create an S3 bucket for CloudFront logs using infrahouse/s3-bucket/aws module.
+    Enables ISO 27001/SOC 2 compliant logging by default. Set to false to disable
+    logging (not recommended for production).
+  EOT
+  type        = bool
+  default     = true
+}
+
+variable "cloudfront_logging_prefix" {
+  description = "Prefix for CloudFront log files in the logging bucket"
+  type        = string
+  default     = "cloudfront-logs/"
+}
+
+variable "cloudfront_logging_include_cookies" {
+  description = "Include cookies in CloudFront logs"
+  type        = bool
+  default     = false
+}
+
+variable "cloudfront_logging_bucket_force_destroy" {
+  description = <<-EOT
+    Allow destruction of the CloudFront logging bucket even if it contains log files.
+    Set to true in test/dev environments. Should remain false in production to prevent
+    accidental data loss.
+  EOT
+  type        = bool
+  default     = false
+}

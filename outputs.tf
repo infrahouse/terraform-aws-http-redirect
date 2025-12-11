@@ -69,3 +69,13 @@ output "caa_records" {
     }
   }
 }
+
+output "cloudfront_logs_bucket_name" {
+  description = "Name of the S3 bucket for CloudFront access logs (null if logging disabled)"
+  value       = var.create_logging_bucket ? module.cloudfront_logs_bucket[0].bucket_name : null
+}
+
+output "cloudfront_logs_bucket_arn" {
+  description = "ARN of the S3 bucket for CloudFront access logs (null if logging disabled)"
+  value       = var.create_logging_bucket ? module.cloudfront_logs_bucket[0].bucket_arn : null
+}
