@@ -28,7 +28,7 @@ data "aws_iam_policy_document" "cloudfront_logs" {
 module "cloudfront_logs_bucket" {
   count   = var.create_logging_bucket ? 1 : 0
   source  = "registry.infrahouse.com/infrahouse/s3-bucket/aws"
-  version = "0.3.0"
+  version = "0.3.1"
 
   # Use zone name for bucket naming (not redirect_domains which may start with "")
   bucket_name = "${replace(data.aws_route53_zone.redirect.name, ".", "-")}-cloudfront-logs"
