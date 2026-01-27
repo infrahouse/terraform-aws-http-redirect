@@ -1,26 +1,84 @@
 # terraform-aws-http-redirect
 
-This Terraform module configures an HTTP/HTTPS redirect for one or more hostnames (e.g. example.com, www.example.com) using:
+[![Need Help?](https://img.shields.io/badge/Need%20Help%3F-Contact%20Us-0066CC)](https://infrahouse.com/contact)
+[![Docs](https://img.shields.io/badge/docs-github.io-blue)](https://infrahouse.github.io/terraform-aws-http-redirect/)
+[![Registry](https://img.shields.io/badge/Terraform-Registry-purple?logo=terraform)](https://registry.terraform.io/modules/infrahouse/http-redirect/aws/latest)
+[![Release](https://img.shields.io/github/release/infrahouse/terraform-aws-http-redirect.svg)](https://github.com/infrahouse/terraform-aws-http-redirect/releases/latest)
+[![Security](https://img.shields.io/github/actions/workflow/status/infrahouse/terraform-aws-http-redirect/vuln-scanner-pr.yml?label=Security)](https://github.com/infrahouse/terraform-aws-http-redirect/actions/workflows/vuln-scanner-pr.yml)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-* Amazon CloudFront (for TLS termination and redirection)
-* Amazon S3 (for static website redirect behavior)
-* ACM certificate (automatically provisioned and validated in us-east-1)
-* Route 53 DNS records (to map domains to the CloudFront distribution)
+[![AWS CloudFront](https://img.shields.io/badge/AWS-CloudFront-orange?logo=amazoncloudwatch)](https://aws.amazon.com/cloudfront/)
+[![AWS S3](https://img.shields.io/badge/AWS-S3-orange?logo=amazons3)](https://aws.amazon.com/s3/)
+[![AWS Route53](https://img.shields.io/badge/AWS-Route53-orange?logo=amazonroute53)](https://aws.amazon.com/route53/)
 
-**Features**
+A Terraform module that creates HTTP/HTTPS redirects using AWS CloudFront, S3, ACM, and Route53.
+Perfect for domain consolidation, vanity URLs, and SEO-friendly permanent redirects.
 
-* Supports HTTPS redirect (301) to a target domain or specific path
-* Redirects preserve paths and query strings
-* Supports both hostname-only (`example.com`) and path redirects (`example.com/landing`)
-* Automatic ACM certificate provisioning and DNS validation
-* CloudFront + S3 origin architecture (cost-efficient and scalable)
+## Why This Module?
 
-**Notes**
+Setting up HTTP redirects in AWS typically requires configuring multiple services manually:
+CloudFront distributions, S3 buckets with website hosting, ACM certificates, and DNS records.
+This module handles all of that complexity in a single, well-tested package.
 
-* ACM certificates must be in us-east-1 for CloudFront — this module ensures that.
-* S3 bucket names and DNS records are created based on the hostnames provided.
-* Redirects use HTTP 301 (permanent redirect).
-* This setup incurs very low monthly costs, ideal for simple domain forwarding.
+**Compared to alternatives:**
+
+- **Manual setup**: This module reduces ~200 lines of Terraform to ~10 lines
+- **ALB redirects**: CloudFront is more cost-effective for simple redirects (~$1-5/month vs $16+/month)
+- **S3-only redirects**: This module adds TLS termination, security headers, and compliance logging
+- **Third-party services**: Keep your infrastructure in AWS with full control and no vendor lock-in
+
+## Features
+
+- **Permanent HTTPS Redirects**: HTTP 301 redirects that preserve paths and query strings
+- **Automatic TLS**: ACM certificate provisioning and DNS validation (zero manual steps)
+- **Security Headers**: HSTS, X-Frame-Options, X-Content-Type-Options pre-configured
+- **Compliance Logging**: ISO 27001/SOC 2 compliant CloudFront access logging
+- **Cost Optimized**: CloudFront price class selection for budget control
+- **WAF Ready**: Optional AWS WAF integration for DDoS protection
+- **Multi-hostname Support**: Redirect apex domain and subdomains with one module call
+
+## Quick Start
+
+```hcl
+provider "aws" {
+  region = "us-west-2"
+}
+
+provider "aws" {
+  alias  = "us-east-1"
+  region = "us-east-1"
+}
+
+data "aws_route53_zone" "redirect" {
+  name = "example.com"
+}
+
+module "http-redirect" {
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
+  version = "1.0.1"
+
+  redirect_hostnames = ["", "www"]
+  redirect_to        = "target.com"
+  zone_id            = data.aws_route53_zone.redirect.zone_id
+
+  providers = {
+    aws           = aws
+    aws.us-east-1 = aws.us-east-1
+  }
+}
+```
+
+This redirects `example.com` and `www.example.com` to `target.com`, preserving paths and query strings.
+
+## Documentation
+
+Full documentation is available at [infrahouse.github.io/terraform-aws-http-redirect](https://infrahouse.github.io/terraform-aws-http-redirect/):
+
+- [Getting Started](https://infrahouse.github.io/terraform-aws-http-redirect/getting-started/) - Prerequisites and first deployment
+- [Configuration](https://infrahouse.github.io/terraform-aws-http-redirect/configuration/) - All variables explained
+- [Architecture](https://infrahouse.github.io/terraform-aws-http-redirect/architecture/) - How it works
+- [Examples](https://infrahouse.github.io/terraform-aws-http-redirect/examples/) - Common use cases
+- [Troubleshooting](https://infrahouse.github.io/terraform-aws-http-redirect/troubleshooting/) - Common issues and solutions
 
 ## Usage
 
@@ -39,7 +97,7 @@ data "aws_route53_zone" "redirect" {
 }
 
 module "http-redirect" {
-  source  = "infrahouse/http-redirect/aws"
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
   version = "1.0.1"
 
   redirect_hostnames = ["", "www"]
@@ -61,7 +119,7 @@ Redirect to a specific path on the target domain:
 
 ```hcl
 module "http-redirect" {
-  source  = "infrahouse/http-redirect/aws"
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
   version = "1.0.1"
 
   redirect_hostnames = ["old-site", "legacy"]
@@ -99,7 +157,7 @@ data "aws_route53_zone" "redirect" {
 }
 
 module "http-redirect" {
-  source  = "infrahouse/http-redirect/aws"
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
   version = "1.0.1"
 
   redirect_hostnames = ["", "www"]
@@ -395,3 +453,19 @@ This module creates the following AWS resources:
 | <a name="output_s3_bucket_arn"></a> [s3\_bucket\_arn](#output\_s3\_bucket\_arn) | The ARN of the S3 bucket used as the redirect origin |
 | <a name="output_s3_bucket_name"></a> [s3\_bucket\_name](#output\_s3\_bucket\_name) | The name of the S3 bucket used as the redirect origin |
 <!-- END_TF_DOCS -->
+
+## Examples
+
+Working examples are available in the [`examples/`](examples/) directory:
+
+- [Basic Redirect](examples/basic/) - Simple domain redirect
+- [Path Redirect](examples/with-path/) - Redirect to a specific path
+- [Minimal Cost](examples/minimal-cost/) - Lowest cost configuration
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## License
+
+This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
