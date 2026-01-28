@@ -205,6 +205,81 @@ module "redirect" {
 !!! note
     AWS WAF incurs additional costs: $5/month per web ACL + $1 per million requests.
 
+### dns_routing_policy
+
+DNS routing policy for Route53 records.
+
+| Attribute | Value |
+|-----------|-------|
+| Type | `string` |
+| Default | `"simple"` |
+
+**Options:**
+
+| Policy | Description |
+|--------|-------------|
+| `simple` | Standard DNS routing (default) |
+| `weighted` | Weighted routing for gradual traffic migration |
+
+Use `weighted` for zero-downtime migrations when transitioning traffic from an existing
+service to the redirect.
+
+### dns_weight
+
+Weight for weighted routing policy (0-255).
+
+| Attribute | Value |
+|-----------|-------|
+| Type | `number` |
+| Default | `100` |
+
+Only used when `dns_routing_policy = "weighted"`. Higher values receive proportionally more
+traffic relative to other weighted records with the same name.
+
+### dns_set_identifier
+
+Unique identifier for weighted routing records.
+
+| Attribute | Value |
+|-----------|-------|
+| Type | `string` |
+| Default | `null` |
+
+Required when `dns_routing_policy = "weighted"`. Must be unique among all weighted records
+with the same DNS name.
+
+**Example: Zero-Downtime Migration**
+
+When deprecating a service and redirecting users to a new URL, weighted routing allows
+gradual traffic shifting:
+
+```hcl
+# Step 1: Deploy redirect with weight=0
+module "redirect" {
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
+  version = "1.0.1"
+
+  redirect_to        = "new-service.example.com"
+  zone_id            = data.aws_route53_zone.main.zone_id
+  redirect_hostnames = ["old-service"]
+
+  # Weighted routing configuration
+  dns_routing_policy = "weighted"
+  dns_weight         = 0
+  dns_set_identifier = "redirect"
+
+  providers = {
+    aws           = aws
+    aws.us-east-1 = aws.us-east-1
+  }
+}
+
+# Step 2: Convert existing service DNS to weighted with weight=100
+# Step 3: Gradually shift weights (90/10 → 50/50 → 10/90 → 0/100)
+# Step 4: Remove old service weighted record
+# Step 5: Optionally convert redirect back to simple routing
+```
+
 ## Outputs
 
 ### CloudFront Outputs
