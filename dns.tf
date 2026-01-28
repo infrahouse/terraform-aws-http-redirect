@@ -3,6 +3,16 @@ resource "aws_route53_record" "extra" {
   zone_id  = var.zone_id
   name     = each.value
   type     = "A"
+
+  set_identifier = var.dns_routing_policy != "simple" ? var.dns_set_identifier : null
+
+  dynamic "weighted_routing_policy" {
+    for_each = var.dns_routing_policy == "weighted" ? [1] : []
+    content {
+      weight = var.dns_weight
+    }
+  }
+
   alias {
     evaluate_target_health = false
     name                   = aws_cloudfront_distribution.redirect.domain_name
@@ -15,6 +25,16 @@ resource "aws_route53_record" "extra_aaaa" {
   zone_id  = var.zone_id
   name     = each.value
   type     = "AAAA"
+
+  set_identifier = var.dns_routing_policy != "simple" ? var.dns_set_identifier : null
+
+  dynamic "weighted_routing_policy" {
+    for_each = var.dns_routing_policy == "weighted" ? [1] : []
+    content {
+      weight = var.dns_weight
+    }
+  }
+
   alias {
     evaluate_target_health = false
     name                   = aws_cloudfront_distribution.redirect.domain_name

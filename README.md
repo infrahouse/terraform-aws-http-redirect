@@ -391,14 +391,14 @@ This module creates the following AWS resources:
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.62, < 7.0 |
-| <a name="provider_aws.us-east-1"></a> [aws.us-east-1](#provider\_aws.us-east-1) | >= 5.62, < 7.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.28.0 |
+| <a name="provider_aws.us-east-1"></a> [aws.us-east-1](#provider\_aws.us-east-1) | 6.28.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_cloudfront_logs_bucket"></a> [cloudfront\_logs\_bucket](#module\_cloudfront\_logs\_bucket) | registry.infrahouse.com/infrahouse/s3-bucket/aws | 0.3.0 |
+| <a name="module_cloudfront_logs_bucket"></a> [cloudfront\_logs\_bucket](#module\_cloudfront\_logs\_bucket) | registry.infrahouse.com/infrahouse/s3-bucket/aws | 0.3.1 |
 
 ## Resources
 
@@ -431,6 +431,9 @@ This module creates the following AWS resources:
 | <a name="input_cloudfront_logging_prefix"></a> [cloudfront\_logging\_prefix](#input\_cloudfront\_logging\_prefix) | Prefix for CloudFront log files in the logging bucket | `string` | `"cloudfront-logs/"` | no |
 | <a name="input_cloudfront_price_class"></a> [cloudfront\_price\_class](#input\_cloudfront\_price\_class) | CloudFront distribution price class. Controls which edge locations are used<br/>and affects cost:<br/>- PriceClass\_100: US, Canada, Europe (lowest cost)<br/>- PriceClass\_200: PriceClass\_100 + Asia, Africa, Oceania, Middle East<br/>- PriceClass\_All: All edge locations (highest cost, best performance globally) | `string` | `"PriceClass_100"` | no |
 | <a name="input_create_logging_bucket"></a> [create\_logging\_bucket](#input\_create\_logging\_bucket) | Create an S3 bucket for CloudFront logs using infrahouse/s3-bucket/aws module.<br/>Enables ISO 27001/SOC 2 compliant logging by default. Set to false to disable<br/>logging (not recommended for production). | `bool` | `true` | no |
+| <a name="input_dns_routing_policy"></a> [dns\_routing\_policy](#input\_dns\_routing\_policy) | DNS routing policy for Route53 records: 'simple' or 'weighted'.<br/>Use 'weighted' for zero-downtime migrations when transitioning traffic<br/>from an existing service to the redirect. | `string` | `"simple"` | no |
+| <a name="input_dns_set_identifier"></a> [dns\_set\_identifier](#input\_dns\_set\_identifier) | Unique identifier for weighted routing records. Required when dns\_routing\_policy = 'weighted'.<br/>Must be unique among all weighted records with the same DNS name.<br/>Example: 'redirect' or 'http-redirect-module' | `string` | `null` | no |
+| <a name="input_dns_weight"></a> [dns\_weight](#input\_dns\_weight) | Weight for weighted routing policy (0-255). Only used when dns\_routing\_policy = 'weighted'.<br/>Higher values receive proportionally more traffic relative to other weighted records<br/>with the same name. | `number` | `100` | no |
 | <a name="input_redirect_hostnames"></a> [redirect\_hostnames](#input\_redirect\_hostnames) | List of hostname prefixes to redirect (e.g., ['', 'www'] for apex and www<br/>subdomain). Use empty string for apex domain. | `list(string)` | <pre>[<br/>  "",<br/>  "www"<br/>]</pre> | no |
 | <a name="input_redirect_to"></a> [redirect\_to](#input\_redirect\_to) | Target URL where HTTP(S) requests will be redirected. Can be:<br/>- A hostname: 'example.com'<br/>- A hostname with path: 'example.com/landing'<br/><br/>Note: Query parameters in redirect\_to are not supported due to S3 routing<br/>rule limitations. Source query parameters will be preserved in redirects.<br/>Do not include protocol (https://). | `string` | n/a | yes |
 | <a name="input_web_acl_id"></a> [web\_acl\_id](#input\_web\_acl\_id) | Optional AWS WAF Web ACL ARN to attach to the CloudFront distribution.<br/>Provides DDoS protection and rate limiting for the redirect service.<br/><br/>Leave null (default) for most use cases. Consider enabling if:<br/>- You have compliance requirements for WAF on all resources<br/>- You're experiencing abuse or high request volumes<br/>- You need IP-based access controls<br/><br/>Note: AWS WAF incurs additional costs per web ACL and per million requests. | `string` | `null` | no |

@@ -132,3 +132,48 @@ variable "web_acl_id" {
   type        = string
   default     = null
 }
+
+variable "dns_routing_policy" {
+  description = <<-EOT
+    DNS routing policy for Route53 records: 'simple' or 'weighted'.
+    Use 'weighted' for zero-downtime migrations when transitioning traffic
+    from an existing service to the redirect.
+  EOT
+  type        = string
+  default     = "simple"
+
+  validation {
+    condition     = contains(["simple", "weighted"], var.dns_routing_policy)
+    error_message = "dns_routing_policy must be 'simple' or 'weighted'."
+  }
+}
+
+variable "dns_weight" {
+  description = <<-EOT
+    Weight for weighted routing policy (0-255). Only used when dns_routing_policy = 'weighted'.
+    Higher values receive proportionally more traffic relative to other weighted records
+    with the same name.
+  EOT
+  type        = number
+  default     = 100
+
+  validation {
+    condition     = var.dns_weight >= 0 && var.dns_weight <= 255
+    error_message = "dns_weight must be between 0 and 255. Got: ${var.dns_weight}"
+  }
+}
+
+variable "dns_set_identifier" {
+  description = <<-EOT
+    Unique identifier for weighted routing records. Required when dns_routing_policy = 'weighted'.
+    Must be unique among all weighted records with the same DNS name.
+    Example: 'redirect' or 'http-redirect-module'
+  EOT
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.dns_set_identifier == null ? true : length(var.dns_set_identifier) > 0
+    error_message = "dns_set_identifier cannot be an empty string when provided."
+  }
+}
