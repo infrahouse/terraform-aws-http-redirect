@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2026-01-28
+
+### Documentation
+
+- Implement Terraform module requirements
+- Implement Terraform module requirements ([#26](https://github.com/infrahouse/terraform-aws-http-redirect/issues/26))
+
+### Features
+
+- Add Route53 weighted routing support for zero-downtime migrations
+
 ## [1.0.1] - 2025-12-11
 
 ### Miscellaneous Tasks
