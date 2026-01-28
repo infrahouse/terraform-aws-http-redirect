@@ -256,7 +256,7 @@ data "aws_route53_zone" "main" {
 }
 
 module "http-redirect" {
-  source  = "infrahouse/http-redirect/aws"
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
   version = "1.0.1"
 
   # Required

@@ -33,7 +33,7 @@ data "aws_route53_zone" "redirect" {
 }
 
 module "http-redirect" {
-  source  = "infrahouse/http-redirect/aws"
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
   version = "1.0.1"
 
   # Redirect specific subdomains

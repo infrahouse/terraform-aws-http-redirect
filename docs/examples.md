@@ -23,7 +23,7 @@ data "aws_route53_zone" "old_domain" {
 }
 
 module "redirect" {
-  source  = "infrahouse/http-redirect/aws"
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
   version = "1.0.1"
 
   redirect_hostnames = ["", "www"]
@@ -55,7 +55,7 @@ data "aws_route53_zone" "main" {
 }
 
 module "campaign_redirect" {
-  source  = "infrahouse/http-redirect/aws"
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
   version = "1.0.1"
 
   redirect_hostnames = ["promo", "sale"]
@@ -86,7 +86,7 @@ data "aws_route53_zone" "main" {
 }
 
 module "legacy_redirects" {
-  source  = "infrahouse/http-redirect/aws"
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
   version = "1.0.1"
 
   redirect_hostnames = [
@@ -117,7 +117,7 @@ data "aws_route53_zone" "main" {
 }
 
 module "redirect" {
-  source  = "infrahouse/http-redirect/aws"
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
   version = "1.0.1"
 
   redirect_hostnames = ["", "www"]
@@ -201,7 +201,7 @@ data "aws_route53_zone" "main" {
 }
 
 module "redirect" {
-  source  = "infrahouse/http-redirect/aws"
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
   version = "1.0.1"
 
   redirect_hostnames = ["", "www"]
@@ -236,7 +236,7 @@ data "aws_route53_zone" "domain_b" {
 }
 
 module "redirect_a" {
-  source  = "infrahouse/http-redirect/aws"
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
   version = "1.0.1"
 
   redirect_hostnames = ["", "www"]
@@ -250,7 +250,7 @@ module "redirect_a" {
 }
 
 module "redirect_b" {
-  source  = "infrahouse/http-redirect/aws"
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
   version = "1.0.1"
 
   redirect_hostnames = ["", "www"]
