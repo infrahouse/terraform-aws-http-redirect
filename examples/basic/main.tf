@@ -38,7 +38,7 @@ data "aws_route53_zone" "redirect" {
 # Create the redirect
 module "http-redirect" {
   source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
-  version = "1.0.1"
+  version = "1.1.0"
 
   # Redirect apex domain and www subdomain
   redirect_hostnames = ["", "www"]

@@ -257,7 +257,7 @@ gradual traffic shifting:
 # Step 1: Deploy redirect with weight=0
 module "redirect" {
   source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
-  version = "1.0.1"
+  version = "1.1.0"
 
   redirect_to        = "new-service.example.com"
   zone_id            = data.aws_route53_zone.main.zone_id
@@ -332,7 +332,7 @@ data "aws_route53_zone" "main" {
 
 module "http-redirect" {
   source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
-  version = "1.0.1"
+  version = "1.1.0"
 
   # Required
   redirect_to = "new-domain.com"
