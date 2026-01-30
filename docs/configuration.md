@@ -275,7 +275,7 @@ errors when multiple modules manage the same domain.
 # When using alongside terraform-aws-ecs for the same domain
 module "redirect" {
   source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
-  version = "1.1.0"
+  version = "1.2.0"
 
   redirect_to        = "new-domain.com"
   zone_id            = data.aws_route53_zone.main.zone_id
@@ -300,7 +300,7 @@ gradual traffic shifting:
 # Step 1: Deploy redirect with weight=0
 module "redirect" {
   source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
-  version = "1.1.0"
+  version = "1.2.0"
 
   redirect_to        = "new-service.example.com"
   zone_id            = data.aws_route53_zone.main.zone_id
@@ -375,7 +375,7 @@ data "aws_route53_zone" "main" {
 
 module "http-redirect" {
   source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
-  version = "1.1.0"
+  version = "1.2.0"
 
   # Required
   redirect_to = "new-domain.com"
