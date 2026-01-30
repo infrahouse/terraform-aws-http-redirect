@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-01-30
+
+### Features
+
+- Add option to disable certificate DNS records
+
 ## [1.1.0] - 2026-01-28
 
 ### Documentation
