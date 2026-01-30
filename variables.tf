@@ -177,3 +177,19 @@ variable "dns_set_identifier" {
     error_message = "dns_set_identifier cannot be an empty string when provided."
   }
 }
+
+variable "create_certificate_dns_records" {
+  description = <<-EOT
+    Whether to create DNS records required for certificate issuance.
+    When set to true (default), the module creates:
+    - CAA records (Certificate Authority Authorization)
+    - ACM certificate validation CNAME records
+
+    Set to false if these records are already managed by another module
+    (e.g., terraform-aws-ecs via terraform-aws-website-pod for the same domain).
+    The A/AAAA records pointing to CloudFront are always created regardless
+    of this setting.
+  EOT
+  type        = bool
+  default     = true
+}

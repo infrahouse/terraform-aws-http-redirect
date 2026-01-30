@@ -1,9 +1,12 @@
+import json
 import logging
 import shutil
 from os import path as osp, remove
 from textwrap import dedent
 
+import pytest
 from infrahouse_core.logging import setup_logging
+from pytest_infrahouse import terraform_apply
 
 DEFAULT_PROGRESS_INTERVAL = 10
 TERRAFORM_ROOT_DIR = "test_data"
@@ -13,6 +16,53 @@ LOG = logging.getLogger(__name__)
 
 
 setup_logging(LOG, debug=True)
+
+
+@pytest.fixture(scope="session")
+def shared_certificate(subzone, test_role_arn, aws_region, keep_after):
+    """
+    Create external ACM certificate and DNS records to simulate another module.
+
+    This fixture creates:
+    - ACM certificate for the test domain (in user's region, like ECS/website-pod)
+    - CAA record
+    - Certificate validation CNAME record
+
+    The http-redirect module test will then use create_certificate_dns_records=false
+    to avoid conflicts with these existing records.
+    """
+    zone_id = subzone["subzone_id"]["value"]
+
+    terraform_module_dir = osp.join(TERRAFORM_ROOT_DIR, "shared_certificate")
+    cleanup_dot_terraform(terraform_module_dir)
+
+    with open(osp.join(terraform_module_dir, "terraform.tfvars"), "w") as fp:
+        fp.write(
+            dedent(
+                f"""
+                region  = "{aws_region}"
+                zone_id = "{zone_id}"
+                """
+            )
+        )
+        if test_role_arn:
+            fp.write(
+                dedent(
+                    f"""
+                role_arn = "{test_role_arn}"
+                """
+                )
+            )
+
+    with terraform_apply(
+        terraform_module_dir,
+        destroy_after=not keep_after,
+        json_output=True,
+    ) as tf_output:
+        LOG.info(
+            "shared_certificate fixture created: %s", json.dumps(tf_output, indent=4)
+        )
+        yield tf_output
 
 
 def update_terraform_tf(terraform_module_dir, aws_provider_version):

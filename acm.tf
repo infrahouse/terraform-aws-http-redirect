@@ -17,13 +17,13 @@ resource "aws_acm_certificate" "redirect" {
 
 resource "aws_route53_record" "cert_validation" {
   provider = aws.us-east-1
-  for_each = {
+  for_each = var.create_certificate_dns_records ? {
     for dvo in aws_acm_certificate.redirect.domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
     }
-  }
+  } : {}
   zone_id = var.zone_id
   name    = each.value.name
   type    = each.value.type
@@ -36,7 +36,12 @@ resource "aws_route53_record" "cert_validation" {
 resource "aws_acm_certificate_validation" "redirect" {
   provider        = aws.us-east-1
   certificate_arn = aws_acm_certificate.redirect.arn
-  validation_record_fqdns = [
+
+  # Only specify FQDNs when we create the records ourselves.
+  # When create_certificate_dns_records = false, the validation resource
+  # will still wait for the certificate to become valid, but relies on
+  # existing DNS records created by another module.
+  validation_record_fqdns = var.create_certificate_dns_records ? [
     for d in aws_route53_record.cert_validation : d.fqdn
-  ]
+  ] : null
 }
