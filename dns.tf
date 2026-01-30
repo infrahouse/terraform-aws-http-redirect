@@ -43,7 +43,7 @@ resource "aws_route53_record" "extra_aaaa" {
 }
 
 resource "aws_route53_record" "caa_record" {
-  for_each = local.redirect_domains_map
+  for_each = var.create_certificate_dns_records ? local.redirect_domains_map : {}
   zone_id  = var.zone_id
   name     = each.value
   type     = "CAA"

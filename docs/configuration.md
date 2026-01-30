@@ -248,6 +248,49 @@ Unique identifier for weighted routing records.
 Required when `dns_routing_policy = "weighted"`. Must be unique among all weighted records
 with the same DNS name.
 
+### create_certificate_dns_records
+
+Whether to create DNS records required for certificate issuance.
+
+| Attribute | Value |
+|-----------|-------|
+| Type | `bool` |
+| Default | `true` |
+
+When set to `true` (default), the module creates:
+
+- CAA records (Certificate Authority Authorization)
+- ACM certificate validation CNAME records
+
+Set to `false` if these records are already managed by another module (e.g., `terraform-aws-ecs`
+via `terraform-aws-website-pod` for the same domain). This prevents "record already exists"
+errors when multiple modules manage the same domain.
+
+!!! note
+    The A/AAAA records pointing to CloudFront are always created regardless of this setting.
+
+**Example:**
+
+```hcl
+# When using alongside terraform-aws-ecs for the same domain
+module "redirect" {
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
+  version = "1.1.0"
+
+  redirect_to        = "new-domain.com"
+  zone_id            = data.aws_route53_zone.main.zone_id
+  redirect_hostnames = [""]
+
+  # Skip CAA and validation records - managed by ECS/website-pod module
+  create_certificate_dns_records = false
+
+  providers = {
+    aws           = aws
+    aws.us-east-1 = aws.us-east-1
+  }
+}
+```
+
 **Example: Zero-Downtime Migration**
 
 When deprecating a service and redirecting users to a new URL, weighted routing allows

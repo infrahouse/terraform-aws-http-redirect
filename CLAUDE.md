@@ -3,6 +3,12 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this
 repository.
 
+## First Steps
+
+**Your first tool call in this repository MUST be reading .claude/CODING_STANDARD.md.
+Do not read any other files, search, or take any actions until you have read it.**
+This contains InfraHouse's comprehensive coding standards for Terraform, Python, and general formatting rules.
+
 ## Project Overview
 
 This is a Terraform module that creates HTTP/HTTPS redirects using AWS CloudFront, S3, ACM, and
