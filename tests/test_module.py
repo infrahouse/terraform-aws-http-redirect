@@ -1,11 +1,9 @@
 import json
 from os import path as osp
-from pprint import pprint
 from textwrap import dedent
-from time import sleep
+from time import time
 
 import pytest
-from infrahouse_core.aws import get_client
 from pytest_infrahouse import terraform_apply
 from requests import get, request
 
@@ -90,9 +88,7 @@ def test_module(
         LOG.info("=" * 70)
 
         # Add timestamp for cache-busting to avoid CloudFront caching between tests
-        import time
-
-        cache_bust = f"cachebust={int(time.time() * 1000)}"
+        cache_bust = f"cachebust={int(time() * 1000)}"
 
         # Test 1: HTTP to HTTPS redirect (always redirects to HTTPS version of source)
         source_url = f"http://{zone_name}?{cache_bust}"
@@ -250,9 +246,7 @@ def test_shared_certificate_dns_records(
         ), f"Invalid CloudFront distribution ID: {cf_distribution_id}"
 
         # Add timestamp for cache-busting
-        import time
-
-        cache_bust = f"cachebust={int(time.time() * 1000)}"
+        cache_bust = f"cachebust={int(time() * 1000)}"
 
         # Verify redirect works
         response = get(
@@ -332,11 +326,15 @@ def test_non_get_methods(
         fp.write(
             dedent(
                 f"""
-                region                = "{aws_region}"
-                test_zone_id          = "{zone_id}"
-                redirect_to           = "{redirect_to}"
-                allow_non_get_methods = true
-                response_headers      = {{
+                region                         = "{aws_region}"
+                test_zone_id                   = "{zone_id}"
+                redirect_to                    = "{redirect_to}"
+                allow_non_get_methods          = true
+                # Disable certificate DNS records to avoid collisions with
+                # test_shared_certificate_dns_records, which creates CAA and
+                # ACM validation records for the same subzone.
+                create_certificate_dns_records = false
+                response_headers               = {{
                   "x-redirect-by" = "infrahouse"
                 }}
                 """
@@ -362,9 +360,7 @@ def test_non_get_methods(
         LOG.info(f"Testing non-GET methods with redirect_to={redirect_to}")
         LOG.info("=" * 70)
 
-        import time
-
-        cache_bust = f"cachebust={int(time.time() * 1000)}"
+        cache_bust = f"cachebust={int(time() * 1000)}"
 
         # Test 1: POST returns 308 (method-preserving permanent redirect)
         LOG.info("Testing POST redirect...")

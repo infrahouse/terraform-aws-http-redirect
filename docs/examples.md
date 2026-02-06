@@ -235,7 +235,7 @@ data "aws_route53_zone" "main" {
 
 module "api_redirect" {
   source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
-  version = "~> 1.3"
+  version = "1.2.0"
 
   redirect_hostnames    = ["api-v1"]
   redirect_to           = "api.example.com/v2"
@@ -271,7 +271,7 @@ data "aws_route53_zone" "main" {
 
 module "redirect" {
   source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
-  version = "~> 1.3"
+  version = "1.2.0"
 
   redirect_hostnames = ["", "www"]
   redirect_to        = "new-domain.com"
@@ -316,7 +316,7 @@ data "aws_route53_zone" "main" {
 
 module "maintenance_redirect" {
   source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
-  version = "~> 1.3"
+  version = "1.2.0"
 
   redirect_hostnames    = ["app"]
   redirect_to           = "status.example.com/maintenance"

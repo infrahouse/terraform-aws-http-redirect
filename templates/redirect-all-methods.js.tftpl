@@ -44,7 +44,7 @@ function handler(event) {
     headers: {
       "location": { "value": location },
       "cache-control": { "value": "max-age=86400" }%{ for name, value in response_headers ~},
-      "${name}": { "value": "${value}" }%{~ endfor }
+      "${name}": { "value": ${value} }%{~ endfor }
     }
   };
 }
