@@ -30,6 +30,9 @@ This module handles all of that complexity in a single, well-tested package.
 ## Features
 
 - **Permanent HTTPS Redirects**: HTTP 301 redirects that preserve paths and query strings
+- **All HTTP Methods**: Optional support for POST, PUT, DELETE, PATCH redirects with method-preserving status codes (308/307)
+- **Custom Response Headers**: Add arbitrary headers to redirect responses for tracking or debugging
+- **Temporary Redirects**: Optional 302/307 temporary redirects for maintenance or A/B testing
 - **Automatic TLS**: ACM certificate provisioning and DNS validation (zero manual steps)
 - **Security Headers**: HSTS, X-Frame-Options, X-Content-Type-Options pre-configured
 - **Compliance Logging**: ISO 27001/SOC 2 compliant CloudFront access logging
@@ -368,15 +371,20 @@ This module creates the following AWS resources:
 
 - **Route 53 Records**: A/AAAA aliases pointing to CloudFront
 - **CloudFront Distribution**: Global CDN with TLS and caching
+- **CloudFront Function** (optional): Edge-executed redirect logic for non-GET methods and custom headers
 - **ACM Certificate**: TLS certificate (us-east-1 only)
-- **S3 Bucket**: Static website with redirect rules
+- **S3 Bucket**: Static website with redirect rules (default path)
 - **CloudFront Logs Bucket**: Access logs for compliance and debugging
 - **Security Policies**: Cache policy + Response headers policy
+
+When `allow_non_get_methods` or `response_headers` is set, a CloudFront Function intercepts
+requests at the viewer-request stage, returning redirect responses directly without hitting S3.
+This enables method-preserving redirects (308/307) and custom response headers.
 
 ### Notes
 
 - Make sure the hosted zone exists in Route 53
-- Redirects use HTTP 301 (permanent redirect)
+- Redirects use HTTP 301 (permanent) by default; set `permanent_redirect = false` for 302 (temporary)
 - Query parameters in `redirect_to` are not supported (use path only)
 
 <!-- BEGIN_TF_DOCS -->
@@ -408,6 +416,7 @@ This module creates the following AWS resources:
 | [aws_acm_certificate_validation.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate_validation) | resource |
 | [aws_cloudfront_cache_policy.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_cache_policy) | resource |
 | [aws_cloudfront_distribution.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution) | resource |
+| [aws_cloudfront_function.redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_function) | resource |
 | [aws_cloudfront_response_headers_policy.security_headers](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_response_headers_policy) | resource |
 | [aws_route53_record.caa_record](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
 | [aws_route53_record.cert_validation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
@@ -426,6 +435,7 @@ This module creates the following AWS resources:
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_allow_non_get_methods"></a> [allow\_non\_get\_methods](#input\_allow\_non\_get\_methods) | Enable redirects for POST, PUT, DELETE, PATCH, and OPTIONS methods<br/>(in addition to GET and HEAD which are always supported).<br/><br/>When enabled, a CloudFront Function handles all redirect logic at the edge,<br/>using method-preserving status codes for non-GET methods:<br/><br/>\| permanent\_redirect \| GET/HEAD \| POST/PUT/DELETE/PATCH \|<br/>\|--------------------\|----------\|----------------------\|<br/>\| true (default)     \| 301      \| 308                  \|<br/>\| false              \| 302      \| 307                  \| | `bool` | `false` | no |
 | <a name="input_cloudfront_logging_bucket_force_destroy"></a> [cloudfront\_logging\_bucket\_force\_destroy](#input\_cloudfront\_logging\_bucket\_force\_destroy) | Allow destruction of the CloudFront logging bucket even if it contains log files.<br/>Set to true in test/dev environments. Should remain false in production to prevent<br/>accidental data loss. | `bool` | `false` | no |
 | <a name="input_cloudfront_logging_include_cookies"></a> [cloudfront\_logging\_include\_cookies](#input\_cloudfront\_logging\_include\_cookies) | Include cookies in CloudFront logs | `bool` | `false` | no |
 | <a name="input_cloudfront_logging_prefix"></a> [cloudfront\_logging\_prefix](#input\_cloudfront\_logging\_prefix) | Prefix for CloudFront log files in the logging bucket | `string` | `"cloudfront-logs/"` | no |
@@ -435,8 +445,10 @@ This module creates the following AWS resources:
 | <a name="input_dns_routing_policy"></a> [dns\_routing\_policy](#input\_dns\_routing\_policy) | DNS routing policy for Route53 records: 'simple' or 'weighted'.<br/>Use 'weighted' for zero-downtime migrations when transitioning traffic<br/>from an existing service to the redirect. | `string` | `"simple"` | no |
 | <a name="input_dns_set_identifier"></a> [dns\_set\_identifier](#input\_dns\_set\_identifier) | Unique identifier for weighted routing records. Required when dns\_routing\_policy = 'weighted'.<br/>Must be unique among all weighted records with the same DNS name.<br/>Example: 'redirect' or 'http-redirect-module' | `string` | `null` | no |
 | <a name="input_dns_weight"></a> [dns\_weight](#input\_dns\_weight) | Weight for weighted routing policy (0-255). Only used when dns\_routing\_policy = 'weighted'.<br/>Higher values receive proportionally more traffic relative to other weighted records<br/>with the same name. | `number` | `100` | no |
+| <a name="input_permanent_redirect"></a> [permanent\_redirect](#input\_permanent\_redirect) | Whether redirects are permanent or temporary.<br/><br/>- true (default): Permanent redirect. Browsers cache it. Best for SEO<br/>  and domain migrations. GET/HEAD return 301, other methods return 308.<br/>- false: Temporary redirect. Not cached by browsers. Good for maintenance<br/>  or A/B testing. GET/HEAD return 302, other methods return 307.<br/><br/>\| permanent\_redirect \| GET/HEAD \| POST/PUT/DELETE/PATCH \|<br/>\|--------------------\|----------\|----------------------\|<br/>\| true (default)     \| 301      \| 308                  \|<br/>\| false              \| 302      \| 307                  \| | `bool` | `true` | no |
 | <a name="input_redirect_hostnames"></a> [redirect\_hostnames](#input\_redirect\_hostnames) | List of hostname prefixes to redirect (e.g., ['', 'www'] for apex and www<br/>subdomain). Use empty string for apex domain. | `list(string)` | <pre>[<br/>  "",<br/>  "www"<br/>]</pre> | no |
 | <a name="input_redirect_to"></a> [redirect\_to](#input\_redirect\_to) | Target URL where HTTP(S) requests will be redirected. Can be:<br/>- A hostname: 'example.com'<br/>- A hostname with path: 'example.com/landing'<br/><br/>Note: Query parameters in redirect\_to are not supported due to S3 routing<br/>rule limitations. Source query parameters will be preserved in redirects.<br/>Do not include protocol (https://). | `string` | n/a | yes |
+| <a name="input_response_headers"></a> [response\_headers](#input\_response\_headers) | Additional HTTP headers to include in redirect responses. Each key is a<br/>header name and each value is the header value.<br/><br/>Example: { "x-redirect-by" = "infrahouse", "x-source" = "http-redirect" }<br/><br/>Note: When set to a non-empty map, a CloudFront Function is deployed to<br/>handle redirects (even if allow\_non\_get\_methods is false), because S3<br/>website hosting cannot add custom response headers. | `map(string)` | `{}` | no |
 | <a name="input_web_acl_id"></a> [web\_acl\_id](#input\_web\_acl\_id) | Optional AWS WAF Web ACL ARN to attach to the CloudFront distribution.<br/>Provides DDoS protection and rate limiting for the redirect service.<br/><br/>Leave null (default) for most use cases. Consider enabling if:<br/>- You have compliance requirements for WAF on all resources<br/>- You're experiencing abuse or high request volumes<br/>- You need IP-based access controls<br/><br/>Note: AWS WAF incurs additional costs per web ACL and per million requests. | `string` | `null` | no |
 | <a name="input_zone_id"></a> [zone\_id](#input\_zone\_id) | Route53 hosted zone ID where DNS records will be created | `string` | n/a | yes |
 

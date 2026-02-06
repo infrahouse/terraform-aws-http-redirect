@@ -7,7 +7,7 @@ from time import sleep
 import pytest
 from infrahouse_core.aws import get_client
 from pytest_infrahouse import terraform_apply
-from requests import get
+from requests import get, request
 
 from tests.conftest import (
     LOG,
@@ -280,3 +280,143 @@ def test_shared_certificate_dns_records(
             "Test passed: http-redirect works with externally managed "
             "certificate DNS records"
         )
+
+
+@pytest.mark.parametrize(
+    "aws_provider_version", ["~> 5.56", "~> 6.0"], ids=["aws-5", "aws-6"]
+)
+@pytest.mark.parametrize(
+    "redirect_to,expected_path",
+    [
+        ("infrahouse.com", "https://infrahouse.com/test/path"),
+        (
+            "infrahouse.com/some-path",
+            "https://infrahouse.com/some-path/test/path",
+        ),
+    ],
+    ids=["hostname", "path"],
+)
+def test_non_get_methods(
+    subzone,
+    test_role_arn,
+    keep_after,
+    aws_region,
+    boto3_session,
+    aws_provider_version,
+    redirect_to,
+    expected_path,
+):
+    """
+    Test that non-GET HTTP methods (POST, PUT, DELETE, PATCH) are properly
+    redirected when allow_non_get_methods is enabled.
+
+    With allow_non_get_methods=true and permanent_redirect=true (default):
+    - GET/HEAD requests return 301
+    - POST/PUT/DELETE/PATCH requests return 308 (method-preserving permanent)
+
+    Also tests that custom response_headers (x-redirect-by: infrahouse)
+    appear in all redirect responses.
+
+    Verifies:
+    1. POST returns 308 with correct Location header and custom header
+    2. POST with query string preserves query parameters and custom header
+    3. GET still returns 301 (not broken by the change) with custom header
+    """
+    zone_id = subzone["subzone_id"]["value"]
+
+    terraform_module_dir = osp.join(TERRAFORM_ROOT_DIR, "main")
+    cleanup_dot_terraform(terraform_module_dir)
+    update_terraform_tf(terraform_module_dir, aws_provider_version)
+
+    with open(osp.join(terraform_module_dir, "terraform.tfvars"), "w") as fp:
+        fp.write(
+            dedent(
+                f"""
+                region                = "{aws_region}"
+                test_zone_id          = "{zone_id}"
+                redirect_to           = "{redirect_to}"
+                allow_non_get_methods = true
+                response_headers      = {{
+                  "x-redirect-by" = "infrahouse"
+                }}
+                """
+            )
+        )
+        if test_role_arn:
+            fp.write(
+                dedent(
+                    f"""
+                role_arn = "{test_role_arn}"
+                """
+                )
+            )
+
+    with terraform_apply(
+        terraform_module_dir,
+        destroy_after=not keep_after,
+        json_output=True,
+    ) as tf_output:
+        LOG.info("%s", json.dumps(tf_output, indent=4))
+        zone_name = tf_output["zone_name"]["value"]
+
+        LOG.info(f"Testing non-GET methods with redirect_to={redirect_to}")
+        LOG.info("=" * 70)
+
+        import time
+
+        cache_bust = f"cachebust={int(time.time() * 1000)}"
+
+        # Test 1: POST returns 308 (method-preserving permanent redirect)
+        LOG.info("Testing POST redirect...")
+        source_url = f"https://{zone_name}/test/path?{cache_bust}"
+        response = request("POST", source_url, allow_redirects=False)
+        assert (
+            response.status_code == 308
+        ), f"Expected 308 for POST, got {response.status_code}"
+        location = response.headers["Location"]
+        location_path = location.split("?")[0]
+        assert (
+            location_path == expected_path
+        ), f"Expected {expected_path}, got {location_path}"
+        assert response.headers.get("x-redirect-by") == "infrahouse", (
+            f"Expected x-redirect-by: infrahouse, "
+            f"got: {response.headers.get('x-redirect-by')}"
+        )
+        LOG.info(f"POST {source_url} -> {response.status_code} {location}")
+
+        # Test 2: POST with query string preserves query parameters
+        LOG.info("Testing POST with query string...")
+        source_url = f"https://{zone_name}/test/path" f"?foo=bar&baz=qux&{cache_bust}"
+        response = request("POST", source_url, allow_redirects=False)
+        assert (
+            response.status_code == 308
+        ), f"Expected 308 for POST, got {response.status_code}"
+        location = response.headers["Location"]
+        assert "foo=bar" in location, f"Query parameter 'foo' not in {location}"
+        assert "baz=qux" in location, f"Query parameter 'baz' not in {location}"
+        assert response.headers.get("x-redirect-by") == "infrahouse", (
+            f"Expected x-redirect-by: infrahouse, "
+            f"got: {response.headers.get('x-redirect-by')}"
+        )
+        LOG.info(f"POST {source_url} -> {response.status_code} {location}")
+
+        # Test 3: GET still returns 301 (not broken by allow_non_get_methods)
+        LOG.info("Testing GET still returns 301...")
+        source_url = f"https://{zone_name}/test/path?{cache_bust}&method=get"
+        response = get(source_url, allow_redirects=False)
+        assert (
+            response.status_code == 301
+        ), f"Expected 301 for GET, got {response.status_code}"
+        location = response.headers["Location"]
+        location_path = location.split("?")[0]
+        assert (
+            location_path == expected_path
+        ), f"Expected {expected_path}, got {location_path}"
+        assert response.headers.get("x-redirect-by") == "infrahouse", (
+            f"Expected x-redirect-by: infrahouse, "
+            f"got: {response.headers.get('x-redirect-by')}"
+        )
+        LOG.info(f"GET {source_url} -> {response.status_code} {location}")
+
+        LOG.info("=" * 70)
+        LOG.info("All non-GET method redirect tests PASSED!")

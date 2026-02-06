@@ -248,6 +248,95 @@ Unique identifier for weighted routing records.
 Required when `dns_routing_policy = "weighted"`. Must be unique among all weighted records
 with the same DNS name.
 
+### allow_non_get_methods
+
+Enable redirects for POST, PUT, DELETE, PATCH, and OPTIONS methods.
+
+| Attribute | Value |
+|-----------|-------|
+| Type | `bool` |
+| Default | `false` |
+
+By default, only GET and HEAD methods are supported (matching standard redirect behavior). When
+enabled, a CloudFront Function intercepts all requests at the edge and returns the appropriate
+redirect response, using method-preserving status codes for non-GET methods.
+
+| `permanent_redirect` | GET/HEAD | POST/PUT/DELETE/PATCH |
+|----------------------|----------|----------------------|
+| `true` (default)     | 301      | 308                  |
+| `false`              | 302      | 307                  |
+
+**Example:**
+
+```hcl
+module "redirect" {
+  # ...
+  allow_non_get_methods = true
+}
+```
+
+!!! note
+    When enabled, the S3 origin is still created (CloudFront requires an origin), but the
+    CloudFront Function intercepts all requests before they reach the origin.
+
+### permanent_redirect
+
+Controls whether redirects are permanent or temporary.
+
+| Attribute | Value |
+|-----------|-------|
+| Type | `bool` |
+| Default | `true` |
+
+**Options:**
+
+| Value | GET/HEAD | Other Methods | Browser Behavior |
+|-------|----------|---------------|------------------|
+| `true` (default) | 301 | 308 | Cached permanently |
+| `false` | 302 | 307 | Not cached |
+
+- **Permanent (`true`)**: Best for SEO and domain migrations. Browsers cache the redirect.
+- **Temporary (`false`)**: Good for maintenance pages or A/B testing. Browsers don't cache.
+
+**Example:**
+
+```hcl
+# Temporary redirect for maintenance
+module "redirect" {
+  # ...
+  permanent_redirect = false
+}
+```
+
+### response_headers
+
+Additional HTTP headers to include in redirect responses.
+
+| Attribute | Value |
+|-----------|-------|
+| Type | `map(string)` |
+| Default | `{}` |
+
+Each key is a header name and each value is the header value. Useful for tracking, debugging,
+or adding custom metadata to redirect responses.
+
+**Example:**
+
+```hcl
+module "redirect" {
+  # ...
+  response_headers = {
+    "x-redirect-by" = "infrahouse"
+    "x-source"      = "http-redirect-module"
+  }
+}
+```
+
+!!! note
+    When set to a non-empty map, a CloudFront Function is deployed to handle redirects
+    (even if `allow_non_get_methods` is false), because S3 website hosting cannot add
+    custom response headers.
+
 ### create_certificate_dns_records
 
 Whether to create DNS records required for certificate issuance.
