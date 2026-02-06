@@ -20,6 +20,9 @@ resource "aws_cloudfront_function" "redirect" {
     redirect_path        = local.redirect_path != null ? local.redirect_path : ""
     get_head_status_code = var.permanent_redirect ? 301 : 302
     other_status_code    = var.permanent_redirect ? 308 : 307
-    response_headers     = var.response_headers
+    response_headers = {
+      for name, value in var.response_headers :
+      name => jsonencode(value)
+    }
   })
 }

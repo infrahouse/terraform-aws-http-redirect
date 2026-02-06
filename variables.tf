@@ -226,6 +226,17 @@ variable "response_headers" {
   EOT
   type        = map(string)
   default     = {}
+
+  validation {
+    condition = alltrue([
+      for name, _ in var.response_headers :
+      can(regex("^[a-zA-Z0-9][a-zA-Z0-9_-]*$", name))
+    ])
+    error_message = <<-EOT
+      Header names must contain only letters, digits, hyphens, and
+      underscores, and must start with a letter or digit.
+    EOT
+  }
 }
 
 variable "create_certificate_dns_records" {
