@@ -29,6 +29,11 @@ locals {
     record => trimprefix(join(".", [record, data.aws_route53_zone.redirect.name]), ".")
   }
 
+  # Whether to deploy a CloudFront Function for redirect handling.
+  # Required when non-GET methods are enabled or custom response headers are set,
+  # because S3 website hosting cannot handle either of those.
+  use_cloudfront_function = var.allow_non_get_methods || length(var.response_headers) > 0
+
   # CloudFront logging bucket domain name (for logging_config)
   # Format: bucket-name.s3.amazonaws.com
   cloudfront_logging_bucket = (

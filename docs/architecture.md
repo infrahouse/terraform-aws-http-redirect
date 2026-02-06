@@ -51,6 +51,35 @@ price_class           = var.cloudfront_price_class
 web_acl_id            = var.web_acl_id  # Optional WAF
 ```
 
+### CloudFront Function (Optional)
+
+When `allow_non_get_methods = true` or `response_headers` is non-empty, a CloudFront Function
+handles all redirect logic at the edge:
+
+- **Viewer-Request Stage**: Intercepts requests before they reach the S3 origin
+- **Method-Preserving Redirects**: Uses 308/307 for POST/PUT/DELETE/PATCH (preserves HTTP method)
+- **Custom Response Headers**: Adds user-defined headers to redirect responses
+- **Query String Preservation**: Reconstructs query strings from CloudFront's structured format
+
+The function is written in `cloudfront-js-2.0` runtime and deployed from a template
+(`templates/redirect-all-methods.js.tftpl`).
+
+**Status code selection:**
+
+| `permanent_redirect` | GET/HEAD | POST/PUT/DELETE/PATCH |
+|----------------------|----------|----------------------|
+| `true` (default)     | 301      | 308                  |
+| `false`              | 302      | 307                  |
+
+**When is the function deployed?**
+
+The function is created when either condition is true:
+
+- `allow_non_get_methods = true` (need to handle non-GET methods)
+- `response_headers` is non-empty (S3 cannot add custom headers)
+
+When neither condition is met, the module uses the default S3 website hosting path.
+
 ### S3 Bucket (Redirect Origin)
 
 S3 provides the actual redirect logic via website hosting:
@@ -105,6 +134,28 @@ Stores CloudFront access logs for compliance:
 6. **CloudFront Response**: CloudFront returns 301 to user (caches response)
 
 7. **Follow Redirect**: User's browser follows redirect to target domain
+
+### Request Flow with CloudFront Function
+
+When `allow_non_get_methods` or `response_headers` is enabled, the flow changes at step 4:
+
+1. **User Request**: User sends `POST https://example.com/api/data?key=value`
+
+2. **DNS Resolution**: Route 53 returns CloudFront distribution's domain
+
+3. **TLS Handshake**: CloudFront terminates TLS using ACM certificate
+
+4. **CloudFront Function**: The viewer-request function intercepts the request and returns
+   the redirect response directly (the S3 origin is never reached):
+   ```
+   HTTP/1.1 308 Permanent Redirect
+   Location: https://target.com/api/data?key=value
+   Cache-Control: max-age=86400
+   x-redirect-by: infrahouse  (if configured in response_headers)
+   ```
+
+5. **Follow Redirect**: Client follows redirect to target domain, preserving the POST method
+   and request body
 
 ## Security Features
 

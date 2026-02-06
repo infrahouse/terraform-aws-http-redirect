@@ -222,6 +222,122 @@ module "redirect" {
 }
 ```
 
+## API Endpoint Redirect (All HTTP Methods)
+
+Redirect an API endpoint that receives POST, PUT, and DELETE requests.
+
+**Use case:** API domain migration, service consolidation
+
+```hcl
+data "aws_route53_zone" "main" {
+  name = "example.com"
+}
+
+module "api_redirect" {
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
+  version = "~> 1.3"
+
+  redirect_hostnames    = ["api-v1"]
+  redirect_to           = "api.example.com/v2"
+  zone_id               = data.aws_route53_zone.main.zone_id
+  allow_non_get_methods = true
+
+  providers = {
+    aws           = aws
+    aws.us-east-1 = aws.us-east-1
+  }
+}
+```
+
+**Result:**
+
+- `POST https://api-v1.example.com/users` -> `308` -> `https://api.example.com/v2/users`
+- `PUT https://api-v1.example.com/users/123` -> `308` -> `https://api.example.com/v2/users/123`
+- `GET https://api-v1.example.com/users` -> `301` -> `https://api.example.com/v2/users`
+
+POST, PUT, DELETE, and PATCH requests receive a 308 (Permanent Redirect) which instructs clients
+to resend the request with the same method and body to the new location.
+
+## Custom Response Headers
+
+Add custom headers to redirect responses for tracking or debugging.
+
+**Use case:** Redirect attribution, monitoring integration
+
+```hcl
+data "aws_route53_zone" "main" {
+  name = "example.com"
+}
+
+module "redirect" {
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
+  version = "~> 1.3"
+
+  redirect_hostnames = ["", "www"]
+  redirect_to        = "new-domain.com"
+  zone_id            = data.aws_route53_zone.main.zone_id
+
+  response_headers = {
+    "x-redirect-by"     = "infrahouse"
+    "x-redirect-reason" = "domain-migration"
+  }
+
+  providers = {
+    aws           = aws
+    aws.us-east-1 = aws.us-east-1
+  }
+}
+```
+
+**Result:**
+
+All redirect responses include the custom headers:
+```
+HTTP/1.1 301 Moved Permanently
+Location: https://new-domain.com/page
+x-redirect-by: infrahouse
+x-redirect-reason: domain-migration
+```
+
+!!! note
+    Setting `response_headers` deploys a CloudFront Function to handle redirects, even if
+    `allow_non_get_methods` is not enabled.
+
+## Temporary Redirect
+
+Use temporary redirects for maintenance pages or A/B testing.
+
+**Use case:** Scheduled maintenance, traffic experiments
+
+```hcl
+data "aws_route53_zone" "main" {
+  name = "example.com"
+}
+
+module "maintenance_redirect" {
+  source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
+  version = "~> 1.3"
+
+  redirect_hostnames    = ["app"]
+  redirect_to           = "status.example.com/maintenance"
+  zone_id               = data.aws_route53_zone.main.zone_id
+  allow_non_get_methods = true
+  permanent_redirect    = false  # 302/307 instead of 301/308
+
+  providers = {
+    aws           = aws
+    aws.us-east-1 = aws.us-east-1
+  }
+}
+```
+
+**Result:**
+
+- `GET https://app.example.com/` -> `302` -> `https://status.example.com/maintenance/`
+- `POST https://app.example.com/api` -> `307` -> `https://status.example.com/maintenance/api`
+
+Browsers will not cache 302/307 redirects, so removing the redirect later takes effect immediately.
+
 ## Multiple Redirects in Same Account
 
 Create multiple independent redirects.

@@ -21,3 +21,21 @@ variable "redirect_hostnames" {
   type        = list(string)
   default     = ["", "foo", "bar"]
 }
+
+variable "allow_non_get_methods" {
+  description = "Enable redirects for POST, PUT, DELETE, PATCH, and OPTIONS methods"
+  type        = bool
+  default     = false
+}
+
+variable "permanent_redirect" {
+  description = "Whether redirects are permanent (301/308) or temporary (302/307)"
+  type        = bool
+  default     = true
+}
+
+variable "response_headers" {
+  description = "Additional HTTP headers to include in redirect responses"
+  type        = map(string)
+  default     = {}
+}

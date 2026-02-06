@@ -17,6 +17,7 @@ provisioning and DNS configuration.
 
 Key AWS resources created:
 - CloudFront distribution (TLS termination and redirect execution)
+- CloudFront Function (optional, for non-GET method support or custom response headers)
 - S3 bucket with website hosting (redirect origin)
 - ACM certificate (auto-provisioned in us-east-1)
 - Route53 DNS records (A/AAAA aliases to CloudFront)
@@ -72,11 +73,13 @@ terraform-docs .     # Manually regenerate documentation
 
 ### Module Structure
 - `main.tf` - CloudFront distribution configuration
+- `cloudfront-function.tf` - Optional CloudFront Function for non-GET methods and custom headers
+- `templates/redirect-all-methods.js.tftpl` - JavaScript template for the CloudFront Function
 - `s3.tf` - S3 bucket and website configuration for redirect origin
 - `acm.tf` - ACM certificate provisioning and validation (us-east-1 provider)
 - `dns.tf` - Route53 A/AAAA records pointing to CloudFront
-- `variables.tf` - Module inputs (redirect_hostnames, redirect_to, zone_id)
-- `locals.tf` - Module version and default tags
+- `variables.tf` - Module inputs (redirect_hostnames, redirect_to, zone_id, etc.)
+- `locals.tf` - Module version, default tags, and `use_cloudfront_function` conditional
 - `data-sources.tf` - Route53 zone lookup
 - `terraform.tf` - Provider configuration (AWS ~> 5.62)
 
@@ -102,6 +105,23 @@ custom origin (not S3 origin) to preserve the HTTP redirect behavior.
 - Uses `viewer_protocol_policy = "redirect-to-https"` to force HTTPS
 - Forwards query strings to preserve them during redirect
 - Uses `default_cache_behavior` to cache redirect responses
+
+**CloudFront Function** (`cloudfront-function.tf`):
+An optional CloudFront Function is deployed when `local.use_cloudfront_function` is true, which
+happens when either `allow_non_get_methods = true` or `response_headers` is non-empty. The function:
+- Intercepts requests at the viewer-request stage (before reaching S3 origin)
+- Returns redirect responses directly (S3 is never reached)
+- Uses 308/307 status codes for non-GET/HEAD methods to preserve HTTP method and body
+- Uses 301/302 for GET/HEAD (controlled by `permanent_redirect` variable)
+- Adds custom response headers from `var.response_headers`
+- Reconstructs query strings from CloudFront's structured querystring object
+
+The JavaScript source lives in `templates/redirect-all-methods.js.tftpl` and is rendered via
+`templatefile()` with variables: `redirect_hostname`, `redirect_path`, `get_head_status_code`,
+`other_status_code`, and `response_headers`.
+
+When neither condition is met, the module uses the default S3 website hosting redirect path
+(GET-only, 301 responses).
 
 ### Testing Architecture
 
@@ -142,7 +162,9 @@ Renovate is configured but has GitHub Actions updates disabled.
 
 - ACM certificates MUST be in us-east-1 for CloudFront compatibility
 - S3 bucket names are derived from hostnames and must be globally unique
-- All redirects are HTTP 301 (permanent)
+- Default redirects are HTTP 301 (permanent); set `permanent_redirect = false` for 302/307
+- Non-GET methods (POST, PUT, DELETE, PATCH) use 308/307 to preserve method and body
 - Query strings and paths are preserved during redirects
 - The module requires an existing Route53 hosted zone (passed via zone_id)
 - Changes to README.md should not be made manually - use terraform-docs instead
+- Setting `response_headers` or `allow_non_get_methods` deploys a CloudFront Function

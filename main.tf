@@ -75,12 +75,22 @@ resource "aws_cloudfront_distribution" "redirect" {
   }
 
   default_cache_behavior {
-    allowed_methods            = ["GET", "HEAD"]
+    allowed_methods = var.allow_non_get_methods ? [
+      "GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"
+    ] : ["GET", "HEAD"]
     cached_methods             = ["GET", "HEAD"]
     target_origin_id           = "redirect-origin"
     viewer_protocol_policy     = "redirect-to-https"
     cache_policy_id            = aws_cloudfront_cache_policy.redirect.id
     response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
+
+    dynamic "function_association" {
+      for_each = local.use_cloudfront_function ? [1] : []
+      content {
+        event_type   = "viewer-request"
+        function_arn = aws_cloudfront_function.redirect[0].arn
+      }
+    }
   }
 
   # Logging enabled by default for compliance (ISO 27001, SOC 2)

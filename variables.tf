@@ -178,6 +178,56 @@ variable "dns_set_identifier" {
   }
 }
 
+variable "allow_non_get_methods" {
+  description = <<-EOT
+    Enable redirects for POST, PUT, DELETE, PATCH, and OPTIONS methods
+    (in addition to GET and HEAD which are always supported).
+
+    When enabled, a CloudFront Function handles all redirect logic at the edge,
+    using method-preserving status codes for non-GET methods:
+
+    | permanent_redirect | GET/HEAD | POST/PUT/DELETE/PATCH |
+    |--------------------|----------|----------------------|
+    | true (default)     | 301      | 308                  |
+    | false              | 302      | 307                  |
+  EOT
+  type        = bool
+  default     = false
+}
+
+variable "permanent_redirect" {
+  description = <<-EOT
+    Whether redirects are permanent or temporary.
+
+    - true (default): Permanent redirect. Browsers cache it. Best for SEO
+      and domain migrations. GET/HEAD return 301, other methods return 308.
+    - false: Temporary redirect. Not cached by browsers. Good for maintenance
+      or A/B testing. GET/HEAD return 302, other methods return 307.
+
+    | permanent_redirect | GET/HEAD | POST/PUT/DELETE/PATCH |
+    |--------------------|----------|----------------------|
+    | true (default)     | 301      | 308                  |
+    | false              | 302      | 307                  |
+  EOT
+  type        = bool
+  default     = true
+}
+
+variable "response_headers" {
+  description = <<-EOT
+    Additional HTTP headers to include in redirect responses. Each key is a
+    header name and each value is the header value.
+
+    Example: { "x-redirect-by" = "infrahouse", "x-source" = "http-redirect" }
+
+    Note: When set to a non-empty map, a CloudFront Function is deployed to
+    handle redirects (even if allow_non_get_methods is false), because S3
+    website hosting cannot add custom response headers.
+  EOT
+  type        = map(string)
+  default     = {}
+}
+
 variable "create_certificate_dns_records" {
   description = <<-EOT
     Whether to create DNS records required for certificate issuance.

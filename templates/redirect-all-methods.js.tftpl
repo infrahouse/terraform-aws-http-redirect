@@ -1,0 +1,50 @@
+function handler(event) {
+  var request = event.request;
+  var method = request.method;
+  var uri = request.uri;
+  var qs = request.querystring;
+
+  // Build query string from the structured object
+  var queryParts = [];
+  for (var key in qs) {
+    if (qs[key].multiValue) {
+      for (var i = 0; i < qs[key].multiValue.length; i++) {
+        queryParts.push(
+          encodeURIComponent(key) + "=" +
+          encodeURIComponent(qs[key].multiValue[i].value)
+        );
+      }
+    } else {
+      queryParts.push(
+        encodeURIComponent(key) + "=" +
+        encodeURIComponent(qs[key].value)
+      );
+    }
+  }
+  var queryString = queryParts.length > 0 ? "?" + queryParts.join("&") : "";
+
+  // Construct the redirect target
+  var redirectPath = "${redirect_path}";
+  var location = "https://${redirect_hostname}" + redirectPath + uri + queryString;
+
+  // Choose status code based on method and permanent_redirect setting
+  var statusCode;
+  if (method === "GET" || method === "HEAD") {
+    statusCode = ${get_head_status_code};
+  } else {
+    statusCode = ${other_status_code};
+  }
+
+  return {
+    statusCode: statusCode,
+    statusDescription: statusCode === 301 ? "Moved Permanently"
+      : statusCode === 302 ? "Found"
+      : statusCode === 307 ? "Temporary Redirect"
+      : "Permanent Redirect",
+    headers: {
+      "location": { "value": location },
+      "cache-control": { "value": "max-age=86400" }%{ for name, value in response_headers ~},
+      "${name}": { "value": "${value}" }%{~ endfor }
+    }
+  };
+}
