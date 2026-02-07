@@ -58,7 +58,7 @@ data "aws_route53_zone" "redirect" {
 
 module "http-redirect" {
   source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
-  version = "1.2.0"
+  version = "1.3.0"
 
   redirect_hostnames = ["", "www"]
   redirect_to        = "target.com"
@@ -101,7 +101,7 @@ data "aws_route53_zone" "redirect" {
 
 module "http-redirect" {
   source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
-  version = "1.2.0"
+  version = "1.3.0"
 
   redirect_hostnames = ["", "www"]
   redirect_to        = "bar.com"
@@ -123,7 +123,7 @@ Redirect to a specific path on the target domain:
 ```hcl
 module "http-redirect" {
   source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
-  version = "1.2.0"
+  version = "1.3.0"
 
   redirect_hostnames = ["old-site", "legacy"]
   redirect_to        = "new-site.com/welcome"
@@ -161,7 +161,7 @@ data "aws_route53_zone" "redirect" {
 
 module "http-redirect" {
   source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
-  version = "1.2.0"
+  version = "1.3.0"
 
   redirect_hostnames = ["", "www"]
   redirect_to        = "target.com"
