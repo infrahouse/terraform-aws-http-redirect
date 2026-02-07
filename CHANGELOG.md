@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-02-07
+
+### Bug Fixes
+
+- Escape response header values and address PR review findings
+- Scope shared_certificate fixture to function to avoid DNS record collisions
+
+### Features
+
+- Add support for all HTTP methods, custom response headers, and temporary redirects
+
 ## [1.2.0] - 2026-01-30
 
 ### Features
