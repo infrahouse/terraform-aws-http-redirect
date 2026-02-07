@@ -326,15 +326,11 @@ def test_non_get_methods(
         fp.write(
             dedent(
                 f"""
-                region                         = "{aws_region}"
-                test_zone_id                   = "{zone_id}"
-                redirect_to                    = "{redirect_to}"
-                allow_non_get_methods          = true
-                # Disable certificate DNS records to avoid collisions with
-                # test_shared_certificate_dns_records, which creates CAA and
-                # ACM validation records for the same subzone.
-                create_certificate_dns_records = false
-                response_headers               = {{
+                region                = "{aws_region}"
+                test_zone_id          = "{zone_id}"
+                redirect_to           = "{redirect_to}"
+                allow_non_get_methods = true
+                response_headers      = {{
                   "x-redirect-by" = "infrahouse"
                 }}
                 """

@@ -18,7 +18,7 @@ LOG = logging.getLogger(__name__)
 setup_logging(LOG, debug=True)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def shared_certificate(subzone, test_role_arn, aws_region, keep_after):
     """
     Create external ACM certificate and DNS records to simulate another module.
