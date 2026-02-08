@@ -34,7 +34,7 @@ data "aws_route53_zone" "redirect" {
 
 module "http-redirect" {
   source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
-  version = "1.3.0"
+  version = "1.3.1"
 
   # Redirect specific subdomains
   redirect_hostnames = ["old-app", "legacy"]
