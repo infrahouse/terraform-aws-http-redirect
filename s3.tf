@@ -27,7 +27,7 @@ resource "aws_s3_bucket_website_configuration" "redirect" {
         Redirect = {
           HostName             = local.redirect_hostname
           Protocol             = "https"
-          HttpRedirectCode     = "301"
+          HttpRedirectCode     = var.permanent_redirect ? "301" : "302"
           ReplaceKeyPrefixWith = "${trimprefix(local.redirect_path, "/")}/"
         }
       }
@@ -38,7 +38,7 @@ resource "aws_s3_bucket_website_configuration" "redirect" {
         Redirect = {
           HostName         = local.redirect_hostname
           Protocol         = "https"
-          HttpRedirectCode = "301"
+          HttpRedirectCode = var.permanent_redirect ? "301" : "302"
         }
       }
     ]
