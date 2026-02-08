@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2026-02-08
+
+### Bug Fixes
+
+- Lowercase response_headers keys and honor permanent_redirect in S3 rules
+
 ## [1.3.0] - 2026-02-07
 
 ### Bug Fixes
