@@ -22,7 +22,7 @@ resource "aws_cloudfront_function" "redirect" {
     other_status_code    = var.permanent_redirect ? 308 : 307
     response_headers = {
       for name, value in var.response_headers :
-      name => jsonencode(value)
+      lower(name) => jsonencode(value)
     }
   })
 }
