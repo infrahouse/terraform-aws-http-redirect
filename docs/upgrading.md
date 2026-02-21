@@ -2,14 +2,22 @@
 
 ## 1.3.x to 2.0.0
 
-### Breaking Changes
+### Upgrading from 1.3.2
+
+If you are already on 1.3.2, your resources already use the random suffix
+naming. Upgrading to 2.0.0 should be seamless -- run `terraform plan` to
+confirm no resources are destroyed/recreated. The only new change in 2.0.0
+is the `depends_on` fix for the CloudFront logs bucket race condition,
+which has no effect on existing deployments.
+
+### Upgrading from 1.3.1 or earlier
 
 Version 2.0.0 fixes name collisions when running multiple module instances
-in the same AWS account (the original bug). The fix uses a random suffix
-in resource names, which means **upgrading in-place will destroy and
-recreate** three resources:
+in the same AWS account. The fix uses a random suffix in resource names,
+which means **upgrading in-place will destroy and recreate** three
+resources:
 
-| Resource | Old name (1.3.x) | New name (2.0.0) |
+| Resource | Old name (<=1.3.1) | New name (2.0.0) |
 |---|---|---|
 | CloudFront cache policy | `redirect-cache-policy-<zone_id>` | `redirect-cache-policy-<random>` |
 | CloudFront response headers policy | `redirect-security-headers-<zone_id>` | `redirect-security-headers-<random>` |
@@ -65,7 +73,7 @@ version):
 ```hcl
 module "redirect_old" {
   source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
-  version = "1.3.1"   # keep old version
+  version = "1.3.1"   # keep your current pre-1.3.2 version
   # ... existing config unchanged ...
   dns_routing_policy = "weighted"
   dns_weight         = 255
@@ -118,7 +126,8 @@ aws cloudwatch get-metric-statistics \
   --namespace AWS/CloudFront \
   --metric-name Requests \
   --dimensions Name=DistributionId,Value=OLD-DISTRIBUTION-ID \
-  --start-time $(date -u -v-10M +%Y-%m-%dT%H:%M:%S) \
+  --start-time $(date -u -v-10M +%Y-%m-%dT%H:%M:%S) \  # macOS
+  # Linux: --start-time $(date -u -d '10 minutes ago' +%Y-%m-%dT%H:%M:%S)
   --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
   --period 60 \
   --statistics Sum
@@ -137,11 +146,22 @@ aws s3 cp --recursive s3://OLD-LOGS-BUCKET s3://NEW-LOGS-BUCKET
 using `terraform state mv`. This avoids a race condition where deleting
 and recreating the same CAA records in one apply could fail.
 
+**Warning**: State moves are delicate. Always verify exact resource
+addresses before running `terraform state mv`, and run `terraform plan`
+after each move to confirm no unexpected changes.
+
 ```bash
+# First, list all DNS records in both modules to find exact addresses:
+terraform state list | grep 'redirect_old.*route53'
+terraform state list | grep 'redirect_new.*route53'
+
 # Move CAA records. Repeat for each hostname prefix ("", "www", etc.):
 terraform state mv \
   'module.redirect_old.aws_route53_record.caa_record[""]' \
   'module.redirect_new.aws_route53_record.caa_record[""]'
+
+# Verify no unexpected changes after the move:
+terraform plan
 
 # Find exact ACM validation record addresses:
 terraform state list | grep acm_validation
@@ -150,6 +170,9 @@ terraform state list | grep acm_validation
 terraform state mv \
   'module.redirect_old.aws_route53_record.acm_validation[...]' \
   'module.redirect_new.aws_route53_record.acm_validation[...]'
+
+# Verify again:
+terraform plan
 ```
 
 Then flip the flag on the new module:

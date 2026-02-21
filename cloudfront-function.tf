@@ -10,7 +10,7 @@
 resource "aws_cloudfront_function" "redirect" {
   count = local.use_cloudfront_function ? 1 : 0
 
-  name    = "redirect-all-methods-${data.aws_route53_zone.redirect.zone_id}"
+  name    = "redirect-all-methods-${random_string.this.result}"
   runtime = "cloudfront-js-2.0"
   comment = "Redirect all HTTP methods for ${var.redirect_to}"
   publish = true
