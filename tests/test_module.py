@@ -412,3 +412,103 @@ def test_non_get_methods(
 
         LOG.info("=" * 70)
         LOG.info("All non-GET method redirect tests PASSED!")
+
+
+@pytest.mark.parametrize("aws_provider_version", ["~> 6.0"], ids=["aws-6"])
+def test_multi_instance(
+    subzone,
+    test_role_arn,
+    keep_after,
+    aws_region,
+    boto3_session,
+    aws_provider_version,
+):
+    """
+    Test that two module instances can coexist in the same AWS account and zone.
+
+    This verifies the fix for name collisions in CloudFront cache policy,
+    response headers policy, and S3 logs bucket that occurred when multiple
+    module instances shared the same Route53 zone.
+    """
+    zone_id = subzone["subzone_id"]["value"]
+
+    terraform_module_dir = osp.join(TERRAFORM_ROOT_DIR, "multi_instance")
+    cleanup_dot_terraform(terraform_module_dir)
+    update_terraform_tf(terraform_module_dir, aws_provider_version)
+
+    with open(osp.join(terraform_module_dir, "terraform.tfvars"), "w") as fp:
+        fp.write(
+            dedent(
+                f"""
+                region               = "{aws_region}"
+                test_zone_id         = "{zone_id}"
+                redirect_to_1        = "infrahouse.com"
+                redirect_hostnames_1 = ["multi1"]
+                redirect_to_2        = "infrahouse.com/docs"
+                redirect_hostnames_2 = ["multi2"]
+                """
+            )
+        )
+        if test_role_arn:
+            fp.write(
+                dedent(
+                    f"""
+                role_arn = "{test_role_arn}"
+                """
+                )
+            )
+
+    with terraform_apply(
+        terraform_module_dir,
+        destroy_after=not keep_after,
+        json_output=True,
+    ) as tf_output:
+        LOG.info("%s", json.dumps(tf_output, indent=4))
+        zone_name = tf_output["zone_name"]["value"]
+
+        LOG.info("Testing multi-instance deployment")
+        LOG.info("=" * 70)
+
+        cache_bust = f"cachebust={int(time() * 1000)}"
+
+        # Verify both CloudFront distributions were created
+        cf_id_1 = tf_output["instance_1_cloudfront_distribution_id"]["value"]
+        cf_id_2 = tf_output["instance_2_cloudfront_distribution_id"]["value"]
+        assert cf_id_1.startswith(
+            "E"
+        ), f"Invalid CloudFront distribution ID for instance 1: {cf_id_1}"
+        assert cf_id_2.startswith(
+            "E"
+        ), f"Invalid CloudFront distribution ID for instance 2: {cf_id_2}"
+        assert cf_id_1 != cf_id_2, "Distributions must be different"
+        LOG.info(f"Instance 1 CloudFront: {cf_id_1}")
+        LOG.info(f"Instance 2 CloudFront: {cf_id_2}")
+
+        # Verify instance 1 redirects to infrahouse.com
+        source_url = f"https://multi1.{zone_name}/?{cache_bust}"
+        response = get(source_url, allow_redirects=False)
+        assert (
+            response.status_code == 301
+        ), f"Instance 1: expected 301, got {response.status_code}"
+        location = response.headers["Location"]
+        assert (
+            "infrahouse.com" in location
+        ), f"Instance 1: expected redirect to infrahouse.com, got {location}"
+        LOG.info(f"Instance 1: {source_url} -> {location}")
+
+        # Verify instance 2 redirects to infrahouse.com/docs
+        source_url = f"https://multi2.{zone_name}/?{cache_bust}"
+        response = get(source_url, allow_redirects=False)
+        assert (
+            response.status_code == 301
+        ), f"Instance 2: expected 301, got {response.status_code}"
+        location = response.headers["Location"]
+        location_path = location.split("?")[0]
+        assert location_path == "https://infrahouse.com/docs/", (
+            f"Instance 2: expected redirect to "
+            f"https://infrahouse.com/docs/, got {location_path}"
+        )
+        LOG.info(f"Instance 2: {source_url} -> {location}")
+
+        LOG.info("=" * 70)
+        LOG.info("All multi-instance tests PASSED!")
