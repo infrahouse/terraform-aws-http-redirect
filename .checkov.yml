@@ -1,0 +1,85 @@
+# Checkov configuration for terraform-aws-http-redirect module
+
+framework:
+  - terraform
+
+skip-path:
+  - test_data
+
+skip-check:
+  # CKV_TF_1: Module sources use version pins from private registry
+  # Using semantic versioning from registry.infrahouse.com provides
+  # better maintainability than commit hashes
+  - CKV_TF_1
+
+  # CKV_TF_2: Module sources use tag rather than commit hash
+  # Same rationale as CKV_TF_1 - registry version pins are preferred
+  - CKV_TF_2
+
+  # CKV_AWS_310: CloudFront origin failover not applicable for redirect
+  # This module uses a single S3 website origin to return HTTP redirects.
+  # There is no secondary origin that could serve redirects, so failover
+  # would add complexity with no benefit.
+  - CKV_AWS_310
+
+  # CKV_AWS_68: CloudFront WAF is optional, controlled by web_acl_id variable
+  # Users can attach a WAF WebACL via the web_acl_id input. Requiring WAF
+  # for a simple redirect service would be disproportionate. The module
+  # returns 301/302 responses only - there is no application to protect.
+  - CKV_AWS_68
+
+  # CKV2_AWS_47: CloudFront default root object is intentionally empty
+  # All requests are redirected regardless of path. Setting a root object
+  # would break the redirect behavior for requests to "/".
+  - CKV2_AWS_47
+
+  # CKV_AWS_86: CloudFront logging is conditional (create_logging_bucket var)
+  # Logging is enabled by default for compliance, but users may disable it
+  # via create_logging_bucket=false when another logging mechanism is in use.
+  - CKV_AWS_86
+
+  # CKV_AWS_21: S3 versioning not needed on redirect bucket
+  # The redirect S3 bucket contains no objects - it is configured purely
+  # as a website endpoint that returns redirect rules. There is nothing
+  # to version.
+  - CKV_AWS_21
+
+  # CKV_AWS_18: S3 access logging not needed on redirect bucket
+  # The redirect bucket receives no direct user traffic; CloudFront is
+  # the entry point and has its own access logging. Logging an empty
+  # bucket would generate no useful data.
+  - CKV_AWS_18
+
+  # CKV_AWS_144: S3 cross-region replication not needed for redirect
+  # The redirect bucket holds only website configuration (no objects).
+  # CloudFront provides global edge availability. Replication would add
+  # cost and complexity with no resilience benefit.
+  - CKV_AWS_144
+
+  # CKV2_AWS_62: S3 event notifications not needed
+  # No objects are written to the redirect bucket, so there are no
+  # events to notify on.
+  - CKV2_AWS_62
+
+  # CKV2_AWS_61: S3 lifecycle configuration not needed
+  # The redirect bucket contains no objects to lifecycle.
+  - CKV2_AWS_61
+
+  # CKV_AWS_374: CloudFront geo restriction not applicable for redirect
+  # This is a redirect service - restricting by geography would break
+  # redirects for users in excluded regions. The module returns 301/302
+  # only; there is no content to geo-fence.
+  - CKV_AWS_374
+
+  # CKV_AWS_305: CloudFront default root object - same as CKV2_AWS_47
+  # Intentionally empty; all paths including "/" must redirect.
+  - CKV_AWS_305
+
+  # CKV_AWS_145: S3 KMS encryption not needed on redirect bucket
+  # The bucket contains no objects - it is a website endpoint returning
+  # redirect rules. SSE-S3 (AES256) is configured and sufficient.
+  # KMS would add cost and key management overhead with no benefit.
+  - CKV_AWS_145
+
+compact: true
+quiet: false
