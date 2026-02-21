@@ -1,9 +1,18 @@
-variable "region" {}
-variable "role_arn" {
-  default = null
+variable "region" {
+  description = "AWS region for test resources"
+  type        = string
 }
 
-variable "test_zone_id" {}
+variable "role_arn" {
+  description = "IAM role ARN to assume for test execution"
+  type        = string
+  default     = null
+}
+
+variable "test_zone_id" {
+  description = "Route53 zone ID for test DNS records"
+  type        = string
+}
 
 variable "redirect_to_1" {
   description = "Target URL for first redirect instance"

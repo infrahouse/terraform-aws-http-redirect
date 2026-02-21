@@ -167,6 +167,9 @@ def test_module(
         LOG.info("All redirect tests PASSED!")
 
 
+# AWS provider compatibility is covered by test_module (both v5 and v6).
+# Feature-specific tests run on v6 only to avoid doubling CI time
+# with no additional coverage value.
 @pytest.mark.parametrize("aws_provider_version", ["~> 6.0"], ids=["aws-6"])
 def test_shared_certificate_dns_records(
     subzone,
@@ -276,9 +279,10 @@ def test_shared_certificate_dns_records(
         )
 
 
-@pytest.mark.parametrize(
-    "aws_provider_version", ["~> 5.56", "~> 6.0"], ids=["aws-5", "aws-6"]
-)
+# AWS provider compatibility is covered by test_module (both v5 and v6).
+# Feature-specific tests run on v6 only to avoid doubling CI time
+# with no additional coverage value.
+@pytest.mark.parametrize("aws_provider_version", ["~> 6.0"], ids=["aws-6"])
 @pytest.mark.parametrize(
     "redirect_to,expected_path",
     [
@@ -414,6 +418,9 @@ def test_non_get_methods(
         LOG.info("All non-GET method redirect tests PASSED!")
 
 
+# AWS provider compatibility is covered by test_module (both v5 and v6).
+# Feature-specific tests run on v6 only to avoid doubling CI time
+# with no additional coverage value.
 @pytest.mark.parametrize("aws_provider_version", ["~> 6.0"], ids=["aws-6"])
 def test_multi_instance(
     subzone,
