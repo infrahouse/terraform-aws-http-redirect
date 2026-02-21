@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2026-02-21
+
+### Bug Fixes
+
+- Address review feedback for 2.0.0 release
+
+### Features
+
+- Prepare 2.0.0 release with multi-instance support and migration guide
+
+### Ci
+
+- Add checkov configuration and pin checkov dependency
+
 ## [1.3.2] - 2026-02-21
 
 **Note**: This patch release inadvertently introduced a breaking change
