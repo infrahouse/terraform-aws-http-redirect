@@ -1,7 +1,13 @@
+resource "random_string" "this" {
+  length  = 8
+  special = false
+  upper   = false
+}
+
 # Cache policy for redirect behavior
 # Forwards query strings to preserve them in redirects
 resource "aws_cloudfront_cache_policy" "redirect" {
-  name        = "redirect-cache-policy-${data.aws_route53_zone.redirect.zone_id}"
+  name        = "redirect-cache-policy-${random_string.this.result}"
   comment     = "Cache policy for HTTP redirect module"
   min_ttl     = 0
   default_ttl = 86400
@@ -22,7 +28,7 @@ resource "aws_cloudfront_cache_policy" "redirect" {
 
 # Security headers policy for redirect responses
 resource "aws_cloudfront_response_headers_policy" "security_headers" {
-  name    = "redirect-security-headers-${data.aws_route53_zone.redirect.zone_id}"
+  name    = "redirect-security-headers-${random_string.this.result}"
   comment = "Security headers policy for HTTP redirect module"
 
   security_headers_config {

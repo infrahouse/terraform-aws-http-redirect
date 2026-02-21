@@ -6,5 +6,9 @@ terraform {
       version               = ">= 5.62, < 7.0"
       configuration_aliases = [aws.us-east-1]
     }
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.0"
+    }
   }
 }

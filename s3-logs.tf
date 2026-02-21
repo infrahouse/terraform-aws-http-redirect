@@ -14,7 +14,7 @@ data "aws_iam_policy_document" "cloudfront_logs" {
     actions = ["s3:PutObject"]
 
     resources = [
-      "arn:aws:s3:::${replace(data.aws_route53_zone.redirect.name, ".", "-")}-cloudfront-logs/*"
+      "arn:aws:s3:::${replace(data.aws_route53_zone.redirect.name, ".", "-")}-cf-logs-${random_string.this.result}/*"
     ]
 
     # Note: We don't add AWS:SourceArn condition here to avoid circular dependency
@@ -31,7 +31,7 @@ module "cloudfront_logs_bucket" {
   version = "0.3.1"
 
   # Use zone name for bucket naming (not redirect_domains which may start with "")
-  bucket_name = "${replace(data.aws_route53_zone.redirect.name, ".", "-")}-cloudfront-logs"
+  bucket_name = "${replace(data.aws_route53_zone.redirect.name, ".", "-")}-cf-logs-${random_string.this.result}"
 
   # Allow bucket deletion with contents in test/dev environments
   force_destroy = var.cloudfront_logging_bucket_force_destroy
