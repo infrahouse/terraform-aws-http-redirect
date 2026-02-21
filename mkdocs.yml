@@ -36,6 +36,7 @@ theme:
 
 nav:
   - Home: index.md
+  - Upgrading: upgrading.md
 
 markdown_extensions:
   - pymdownx.highlight:

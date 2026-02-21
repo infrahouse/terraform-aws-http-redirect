@@ -4,13 +4,27 @@ All notable changes to this project will be documented in this file.
 
 ## [1.3.2] - 2026-02-21
 
+### BREAKING CHANGES
+
+- Resource names now use a random suffix instead of zone ID. Upgrading
+  from 1.3.x will destroy and recreate the CloudFront logs bucket,
+  cache policy, and response headers policy. **The logs bucket
+  destruction causes data loss unless you follow the
+  [migration guide](upgrading.md).**
+- New required provider: `hashicorp/random >= 3.0`. Run
+  `terraform init -upgrade` after updating the module version.
+
 ### Bug Fixes
 
-- Use random suffix in resource names to support multiple module instances
+- Use random suffix in resource names to support multiple module
+  instances in the same AWS account
+- Fix race condition: add `depends_on` for CloudFront logs bucket to
+  prevent "does not enable ACL access" error during creation
 
 ### Documentation
 
 - Implement Terraform module requirements
+- Add upgrading guide with migration instructions
 
 ## [1.3.1] - 2026-02-08
 

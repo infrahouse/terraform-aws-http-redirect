@@ -121,7 +121,8 @@ resource "aws_cloudfront_distribution" "redirect" {
     }
   }
 
-  aliases = local.redirect_domains
+  aliases    = local.redirect_domains
+  depends_on = [module.cloudfront_logs_bucket]
   tags = merge(
     local.default_module_tags,
     {
