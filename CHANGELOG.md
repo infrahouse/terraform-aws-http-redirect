@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.2] - 2026-02-21
+
+### Bug Fixes
+
+- Use random suffix in resource names to support multiple module instances
+
+### Documentation
+
+- Implement Terraform module requirements
+
 ## [1.3.1] - 2026-02-08
 
 ### Bug Fixes
