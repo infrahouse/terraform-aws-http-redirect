@@ -54,7 +54,7 @@ data "aws_route53_zone" "redirect" {
 
 module "http-redirect" {
   source  = "registry.infrahouse.com/infrahouse/http-redirect/aws"
-  version = "3.0.0"
+  version = "3.0.1"
 
   redirect_hostnames = ["", "www"]
   redirect_to        = "target.com"
