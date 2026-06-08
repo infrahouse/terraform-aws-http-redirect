@@ -58,23 +58,15 @@ def test_module(
     update_terraform_tf(terraform_module_dir, aws_provider_version)
 
     with open(osp.join(terraform_module_dir, "terraform.tfvars"), "w") as fp:
-        fp.write(
-            dedent(
-                f"""
+        fp.write(dedent(f"""
                     region       = "{aws_region}"
                     test_zone_id = "{zone_id}"
                     redirect_to  = "{redirect_to}"
-                    """
-            )
-        )
+                    """))
         if test_role_arn:
-            fp.write(
-                dedent(
-                    f"""
+            fp.write(dedent(f"""
                     role_arn = "{test_role_arn}"
-                    """
-                )
-            )
+                    """))
 
     with terraform_apply(
         terraform_module_dir,
@@ -205,25 +197,17 @@ def test_shared_certificate_dns_records(
     update_terraform_tf(terraform_module_dir, aws_provider_version)
 
     with open(osp.join(terraform_module_dir, "terraform.tfvars"), "w") as fp:
-        fp.write(
-            dedent(
-                f"""
+        fp.write(dedent(f"""
                 region                         = "{aws_region}"
                 test_zone_id                   = "{zone_id}"
                 redirect_to                    = "infrahouse.com"
                 create_certificate_dns_records = false
                 redirect_hostnames             = [""]
-                """
-            )
-        )
+                """))
         if test_role_arn:
-            fp.write(
-                dedent(
-                    f"""
+            fp.write(dedent(f"""
                 role_arn = "{test_role_arn}"
-                """
-                )
-            )
+                """))
 
     with terraform_apply(
         terraform_module_dir,
@@ -325,9 +309,7 @@ def test_non_get_methods(
     update_terraform_tf(terraform_module_dir, aws_provider_version)
 
     with open(osp.join(terraform_module_dir, "terraform.tfvars"), "w") as fp:
-        fp.write(
-            dedent(
-                f"""
+        fp.write(dedent(f"""
                 region                = "{aws_region}"
                 test_zone_id          = "{zone_id}"
                 redirect_to           = "{redirect_to}"
@@ -335,17 +317,11 @@ def test_non_get_methods(
                 response_headers      = {{
                   "x-redirect-by" = "infrahouse"
                 }}
-                """
-            )
-        )
+                """))
         if test_role_arn:
-            fp.write(
-                dedent(
-                    f"""
+            fp.write(dedent(f"""
                 role_arn = "{test_role_arn}"
-                """
-                )
-            )
+                """))
 
     with terraform_apply(
         terraform_module_dir,
@@ -441,26 +417,18 @@ def test_multi_instance(
     update_terraform_tf(terraform_module_dir, aws_provider_version)
 
     with open(osp.join(terraform_module_dir, "terraform.tfvars"), "w") as fp:
-        fp.write(
-            dedent(
-                f"""
+        fp.write(dedent(f"""
                 region               = "{aws_region}"
                 test_zone_id         = "{zone_id}"
                 redirect_to_1        = "infrahouse.com"
                 redirect_hostnames_1 = ["multi1"]
                 redirect_to_2        = "infrahouse.com/docs"
                 redirect_hostnames_2 = ["multi2"]
-                """
-            )
-        )
+                """))
         if test_role_arn:
-            fp.write(
-                dedent(
-                    f"""
+            fp.write(dedent(f"""
                 role_arn = "{test_role_arn}"
-                """
-                )
-            )
+                """))
 
     with terraform_apply(
         terraform_module_dir,
