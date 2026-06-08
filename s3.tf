@@ -1,7 +1,17 @@
 resource "aws_s3_bucket" "redirect" {
   bucket_prefix = "http-redirect-"
   force_destroy = true
-  tags          = local.default_module_tags
+
+  # This bucket holds only terraform-managed static redirect configuration — no
+  # data and no audit trail — so cross-region replication adds no value. Exempt
+  # it from the aws-s3-cross-region-replication-enabled compliance check so the
+  # org-governance vanta_exemption reconciler does not flag it.
+  tags = merge(
+    local.default_module_tags,
+    {
+      "vanta-exempt:aws-s3-cross-region-replication-enabled" = "HTTP redirect bucket - terraform-managed static redirect with no data"
+    }
+  )
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "redirect" {
