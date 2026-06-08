@@ -37,22 +37,14 @@ def shared_certificate(subzone, test_role_arn, aws_region, keep_after):
     cleanup_dot_terraform(terraform_module_dir)
 
     with open(osp.join(terraform_module_dir, "terraform.tfvars"), "w") as fp:
-        fp.write(
-            dedent(
-                f"""
+        fp.write(dedent(f"""
                 region  = "{aws_region}"
                 zone_id = "{zone_id}"
-                """
-            )
-        )
+                """))
         if test_role_arn:
-            fp.write(
-                dedent(
-                    f"""
+            fp.write(dedent(f"""
                 role_arn = "{test_role_arn}"
-                """
-                )
-            )
+                """))
 
     with terraform_apply(
         terraform_module_dir,
@@ -69,9 +61,7 @@ def update_terraform_tf(terraform_module_dir, aws_provider_version):
     """Update terraform.tf with specified AWS provider version."""
     terraform_tf_path = osp.join(terraform_module_dir, "terraform.tf")
     with open(terraform_tf_path, "w") as fp:
-        fp.write(
-            dedent(
-                f"""
+        fp.write(dedent(f"""
                 terraform {{
                   required_providers {{
                     aws = {{
@@ -80,9 +70,7 @@ def update_terraform_tf(terraform_module_dir, aws_provider_version):
                     }}
                   }}
                 }}
-                """
-            )
-        )
+                """))
 
 
 def cleanup_dot_terraform(terraform_module_dir):
