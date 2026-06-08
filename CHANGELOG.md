@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0] - 2026-06-08
+
+### Bug Fixes
+
+- Correct broken link path in changelog for mkdocs strict mode
+- New lines
+
+### Features
+
+- Cross-region replication for CloudFront log bucket
+
+### Ci
+
+- Bump test deps and reformat tests for newer black
+
 ## [2.0.0] - 2026-02-21
 
 ### Bug Fixes
