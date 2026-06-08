@@ -14,4 +14,8 @@ module "test" {
   response_headers               = var.response_headers
 
   cloudfront_logging_bucket_force_destroy = true # Allow test cleanup
+
+  # Exercise cross-region replication end to end. The replica must live in a
+  # different region than the log bucket, so derive it from the deploy region.
+  replication_region = var.region == "us-east-1" ? "us-west-2" : "us-east-1"
 }

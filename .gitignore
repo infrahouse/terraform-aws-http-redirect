@@ -10,4 +10,6 @@ terraform.tfvars
 
 # Claude Code local settings
 .claude/*.local.json
+.claude/plans/*.local.md
 .claude/reviews/
+.claude/projects/

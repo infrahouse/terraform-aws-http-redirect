@@ -28,10 +28,16 @@ data "aws_iam_policy_document" "cloudfront_logs" {
 module "cloudfront_logs_bucket" {
   count   = var.create_logging_bucket ? 1 : 0
   source  = "registry.infrahouse.com/infrahouse/s3-bucket/aws"
-  version = "0.3.1"
+  version = "0.6.0"
 
   # Use zone name for bucket naming (not redirect_domains which may start with "")
   bucket_name = "${replace(data.aws_route53_zone.redirect.name, ".", "-")}-cf-logs-${random_string.this.result}"
+
+  # Replicate CloudFront access logs to a second region so the bucket passes
+  # the aws-s3-cross-region-replication-enabled compliance check. The s3-bucket
+  # module provisions the replica via the per-resource region argument, so no
+  # extra provider alias is required here.
+  replication_region = var.replication_region
 
   # Allow bucket deletion with contents in test/dev environments
   force_destroy = var.cloudfront_logging_bucket_force_destroy

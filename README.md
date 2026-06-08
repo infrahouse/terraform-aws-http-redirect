@@ -393,22 +393,23 @@ This enables method-preserving redirects (308/307) and custom response headers.
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.62, < 7.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.0, < 7.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.33.0 |
-| <a name="provider_aws.us-east-1"></a> [aws.us-east-1](#provider\_aws.us-east-1) | 6.33.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.8.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.0, < 7.0 |
+| <a name="provider_aws.us-east-1"></a> [aws.us-east-1](#provider\_aws.us-east-1) | >= 6.0, < 7.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | >= 3.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_cloudfront_logs_bucket"></a> [cloudfront\_logs\_bucket](#module\_cloudfront\_logs\_bucket) | registry.infrahouse.com/infrahouse/s3-bucket/aws | 0.3.1 |
+| <a name="module_cloudfront_logs_bucket"></a> [cloudfront\_logs\_bucket](#module\_cloudfront\_logs\_bucket) | registry.infrahouse.com/infrahouse/s3-bucket/aws | 0.6.0 |
 
 ## Resources
 
@@ -451,6 +452,7 @@ This enables method-preserving redirects (308/307) and custom response headers.
 | <a name="input_permanent_redirect"></a> [permanent\_redirect](#input\_permanent\_redirect) | Whether redirects are permanent or temporary.<br/><br/>- true (default): Permanent redirect. Browsers cache it. Best for SEO<br/>  and domain migrations. GET/HEAD return 301, other methods return 308.<br/>- false: Temporary redirect. Not cached by browsers. Good for maintenance<br/>  or A/B testing. GET/HEAD return 302, other methods return 307.<br/><br/>\| permanent\_redirect \| GET/HEAD \| POST/PUT/DELETE/PATCH \|<br/>\|--------------------\|----------\|----------------------\|<br/>\| true (default)     \| 301      \| 308                  \|<br/>\| false              \| 302      \| 307                  \| | `bool` | `true` | no |
 | <a name="input_redirect_hostnames"></a> [redirect\_hostnames](#input\_redirect\_hostnames) | List of hostname prefixes to redirect (e.g., ['', 'www'] for apex and www<br/>subdomain). Use empty string for apex domain. | `list(string)` | <pre>[<br/>  "",<br/>  "www"<br/>]</pre> | no |
 | <a name="input_redirect_to"></a> [redirect\_to](#input\_redirect\_to) | Target URL where HTTP(S) requests will be redirected. Can be:<br/>- A hostname: 'example.com'<br/>- A hostname with path: 'example.com/landing'<br/><br/>Note: Query parameters in redirect\_to are not supported due to S3 routing<br/>rule limitations. Source query parameters will be preserved in redirects.<br/>Do not include protocol (https://). | `string` | n/a | yes |
+| <a name="input_replication_region"></a> [replication\_region](#input\_replication\_region) | AWS region for the CloudFront log bucket's cross-region replica, enabling<br/>S3 cross-region replication (aws-s3-cross-region-replication-enabled).<br/><br/>Required (non-null) whenever create\_logging\_bucket is true, to force an<br/>explicit compliance decision. Must be a different region than the one the<br/>log bucket is deployed in. Leave null only when create\_logging\_bucket is<br/>false (no bucket to replicate) or for test/ephemeral environments. | `string` | `null` | no |
 | <a name="input_response_headers"></a> [response\_headers](#input\_response\_headers) | Additional HTTP headers to include in redirect responses. Each key is a<br/>header name and each value is the header value.<br/><br/>Example: { "x-redirect-by" = "infrahouse", "x-source" = "http-redirect" }<br/><br/>Note: When set to a non-empty map, a CloudFront Function is deployed to<br/>handle redirects (even if allow\_non\_get\_methods is false), because S3<br/>website hosting cannot add custom response headers. | `map(string)` | `{}` | no |
 | <a name="input_web_acl_id"></a> [web\_acl\_id](#input\_web\_acl\_id) | Optional AWS WAF Web ACL ARN to attach to the CloudFront distribution.<br/>Provides DDoS protection and rate limiting for the redirect service.<br/><br/>Leave null (default) for most use cases. Consider enabling if:<br/>- You have compliance requirements for WAF on all resources<br/>- You're experiencing abuse or high request volumes<br/>- You need IP-based access controls<br/><br/>Note: AWS WAF incurs additional costs per web ACL and per million requests. | `string` | `null` | no |
 | <a name="input_zone_id"></a> [zone\_id](#input\_zone\_id) | Route53 hosted zone ID where DNS records will be created | `string` | n/a | yes |

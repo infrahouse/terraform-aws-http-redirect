@@ -117,6 +117,29 @@ variable "cloudfront_logging_bucket_force_destroy" {
   default     = false
 }
 
+variable "replication_region" {
+  description = <<-EOT
+    AWS region for the CloudFront log bucket's cross-region replica, enabling
+    S3 cross-region replication (aws-s3-cross-region-replication-enabled).
+
+    Required (non-null) whenever create_logging_bucket is true, to force an
+    explicit compliance decision. Must be a different region than the one the
+    log bucket is deployed in. Leave null only when create_logging_bucket is
+    false (no bucket to replicate) or for test/ephemeral environments.
+  EOT
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.create_logging_bucket ? var.replication_region != null : true
+    error_message = <<-EOT
+      replication_region is required when create_logging_bucket is true. Set it
+      to a region different from the log bucket's region. It may be null only
+      when create_logging_bucket is false.
+    EOT
+  }
+}
+
 variable "web_acl_id" {
   description = <<-EOT
     Optional AWS WAF Web ACL ARN to attach to the CloudFront distribution.

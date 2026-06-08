@@ -15,7 +15,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.62, < 7.0"
+      version = ">= 6.0, < 7.0"
     }
   }
 }
@@ -44,6 +44,7 @@ module "http-redirect" {
   # Cost optimizations
   cloudfront_price_class = "PriceClass_100" # US/Canada/Europe only
   create_logging_bucket  = false            # Disable logging
+  # No logging bucket is created, so replication_region is not needed.
 
   providers = {
     aws           = aws

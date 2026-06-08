@@ -14,7 +14,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.62, < 7.0"
+      version = ">= 6.0, < 7.0"
     }
   }
 }
@@ -48,6 +48,10 @@ module "http-redirect" {
 
   # Route 53 zone for DNS records
   zone_id = data.aws_route53_zone.redirect.zone_id
+
+  # Replicate the CloudFront log bucket to a second region (compliance).
+  # Must differ from the bucket's region (us-west-2 above).
+  replication_region = "us-east-1"
 
   # Pass both providers to the module
   providers = {
