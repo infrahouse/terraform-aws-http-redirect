@@ -9,6 +9,7 @@ module "instance_1" {
   zone_id            = var.test_zone_id
 
   cloudfront_logging_bucket_force_destroy = true # Allow test cleanup
+  replication_region                      = var.region == "us-east-1" ? "us-west-2" : "us-east-1"
 }
 
 module "instance_2" {
@@ -22,4 +23,5 @@ module "instance_2" {
   zone_id            = var.test_zone_id
 
   cloudfront_logging_bucket_force_destroy = true # Allow test cleanup
+  replication_region                      = var.region == "us-east-1" ? "us-west-2" : "us-east-1"
 }

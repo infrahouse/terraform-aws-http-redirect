@@ -128,6 +128,32 @@ logging (not recommended for production).
 create_logging_bucket = false
 ```
 
+### replication_region
+
+AWS region for the CloudFront log bucket's cross-region replica. The logging
+bucket replicates its objects to a bucket in this region so it passes the
+`aws-s3-cross-region-replication-enabled` compliance check.
+
+| Attribute | Value |
+|-----------|-------|
+| Type | `string` |
+| Default | `null` |
+
+This is **required (non-null) when `create_logging_bucket = true`** to force an
+explicit compliance decision, and it must be a **different** region than the one
+the log bucket is deployed in. Leave it `null` only when `create_logging_bucket`
+is `false` (there is no bucket to replicate) or for test/ephemeral environments.
+
+**Example:**
+
+```hcl
+# Log bucket deployed in us-west-2, replica in us-east-1
+module "redirect" {
+  # ...
+  replication_region = "us-east-1"
+}
+```
+
 ### cloudfront_logging_prefix
 
 Prefix for CloudFront log files in the logging bucket.
